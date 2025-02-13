@@ -107,7 +107,7 @@ const GitRepoList = ({navigation}: any) => {
           <Text style={styles.repoName}>{item.name}</Text>
           <Text style={styles.ownerName}>@{item.owner.login}</Text>
         </View>
-        {/* Favorite Button */}
+
         <TouchableOpacity onPress={() => toggleFavorite(item)}>
           <Text style={styles.favoriteIcon}>
             {isFavorite(item.id) ? '⭐' : '☆'}
