@@ -107,7 +107,6 @@ const GitRepoList = ({navigation}: any) => {
           <Text style={styles.repoName}>{item.name}</Text>
           <Text style={styles.ownerName}>@{item.owner.login}</Text>
         </View>
-
         <TouchableOpacity onPress={() => toggleFavorite(item)}>
           <Text style={styles.favoriteIcon}>
             {isFavorite(item.id) ? '⭐' : '☆'}
@@ -140,7 +139,6 @@ const GitRepoList = ({navigation}: any) => {
             onChangeText={handleSearch}
           />
         </View>
-
         <TouchableOpacity
           style={styles.favButton}
           onPress={() => setShowFavorites(!showFavorites)}>
@@ -174,17 +172,32 @@ const GitRepoList = ({navigation}: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#f8f9fa'},
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
   header: {
     padding: 20,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#eaecef',
+    // New styling for header - adding shadow and elevation for depth
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    elevation: 3,
   },
-  title: {fontSize: 28, fontWeight: 'bold', color: '#24292e', marginBottom: 16},
-  searchContainer: {marginBottom: 8},
+  title: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#24292e',
+    marginBottom: 10,
+  },
+  searchContainer: {
+    marginBottom: 10,
+  },
   searchBar: {
-    height: 46,
+    height: 48,
     backgroundColor: '#f6f8fa',
     borderWidth: 1,
     borderColor: '#e1e4e8',
@@ -194,14 +207,31 @@ const styles = StyleSheet.create({
     color: '#24292e',
   },
   favButton: {
-    padding: 10,
+    padding: 12,
     backgroundColor: '#0366d6',
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
-  favButtonText: {color: 'white', fontWeight: 'bold'},
-  listContainer: {padding: 16},
+  favButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  error: {
+    color: 'red',
+    fontSize: 16,
+  },
+  listContainer: {
+    padding: 16,
+  },
   repoItem: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
@@ -209,15 +239,35 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#eaecef',
+    // New styling for repo item - subtle shadow for depth
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: {width: 0, height: 1},
+    elevation: 1,
   },
   itemHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  avatar: {width: 48, height: 48, borderRadius: 24, marginRight: 12},
-  repoName: {fontSize: 18, fontWeight: 'bold', color: '#24292e'},
-  ownerName: {fontSize: 14, color: '#0366d6'},
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+  headerText: {
+    flex: 1,
+  },
+  repoName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#24292e',
+  },
+  ownerName: {
+    fontSize: 14,
+    color: '#0366d6',
+  },
   description: {
     fontSize: 15,
     color: '#57606a',
@@ -229,8 +279,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 12,
   },
-  statNumber: {fontSize: 14, color: '#24292e', fontWeight: '500'},
-  favoriteIcon: {fontSize: 22, paddingHorizontal: 10, color: '#0366d6'},
+  statNumber: {
+    fontSize: 14,
+    color: '#24292e',
+    fontWeight: '500',
+  },
+  favoriteIcon: {
+    fontSize: 26,
+    paddingHorizontal: 10,
+    color: '#0366d6',
+  },
 });
 
 export default GitRepoList;
