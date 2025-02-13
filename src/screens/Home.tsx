@@ -140,7 +140,7 @@ const GitRepoList = ({navigation}: any) => {
             onChangeText={handleSearch}
           />
         </View>
-        {/* Toggle Button for Favorites */}
+
         <TouchableOpacity
           style={styles.favButton}
           onPress={() => setShowFavorites(!showFavorites)}>
