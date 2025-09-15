@@ -116,8 +116,10 @@ export class DonationApiError extends Error {
 
 // ==================== API CONFIGURATION ====================
 
-const API_BASE_URL = 'http://localhost:4000';
+// const API_BASE_URL =
+//   'https://donation-1-efzw.onrender.com/' || 'http://localhost:4000';
 
+import {API_BASE_URL} from '../../src/config';
 // Helper function to get auth headers
 const getAuthHeaders = (token: string) => ({
   'Content-Type': 'application/json',
