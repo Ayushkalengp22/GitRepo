@@ -8,6 +8,7 @@ import Home from '../src/screens/Home';
 import Login from './screens/Login';
 import AddDonator from './screens/AddDonator';
 import ViewAll from './screens/Viewall';
+import EditDonator from './screens/EditDonator';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -15,6 +16,7 @@ export type RootStackParamList = {
   Details: undefined;
   AddDonator: undefined;
   ViewAll: undefined;
+  EditDonator: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +65,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="ViewAll"
               component={ViewAll}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="EditDonator"
+              component={EditDonator}
               options={{headerShown: false}}
             />
           </>

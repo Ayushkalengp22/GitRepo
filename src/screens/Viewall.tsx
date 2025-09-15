@@ -28,6 +28,7 @@ type RootStackParamList = {
   Details: undefined;
   AddDonator: undefined;
   ViewAll: undefined;
+  EditDonator: {donatorId: number};
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -51,10 +52,20 @@ const ViewAll = () => {
     loadAllDonations();
   }, []);
 
+  // Add navigation listener to refresh data when returning from edit screen
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('ViewAll screen focused, refreshing data...');
+      loadAllDonations();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   useEffect(() => {
     filterDonations();
   }, [allDonators, searchQuery, activeFilter]);
-  console.log(user, 'USer=====');
+
   const loadAllDonations = async () => {
     try {
       setIsLoading(true);
@@ -144,6 +155,10 @@ const ViewAll = () => {
       .length;
   };
 
+  const handleEditDonator = (donatorId: number) => {
+    navigation.navigate('EditDonator', {donatorId});
+  };
+
   const renderDonatorCard = ({item}: {item: Donator}) => {
     const status = getDonationStatus(item);
     const totalAmount = getTotalAmount(item);
@@ -151,18 +166,27 @@ const ViewAll = () => {
     const totalBalance = getTotalBalance(item);
 
     return (
-      <TouchableOpacity style={styles.donatorCard}>
+      <TouchableOpacity
+        style={styles.donatorCard}
+        onPress={() => handleEditDonator(item.id)}
+        activeOpacity={0.7}>
         <View style={styles.cardHeader}>
           <Text style={styles.donatorName}>{item.name}</Text>
-          <View
-            style={[
-              styles.statusBadge,
-              {backgroundColor: getStatusBadgeColor(status)},
-            ]}>
-            <Text
-              style={[styles.statusText, {color: getStatusTextColor(status)}]}>
-              {status}
-            </Text>
+          <View style={styles.cardActions}>
+            <View
+              style={[
+                styles.statusBadge,
+                {backgroundColor: getStatusBadgeColor(status)},
+              ]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  {color: getStatusTextColor(status)},
+                ]}>
+                {status}
+              </Text>
+            </View>
+            <Text style={styles.editHint}>Tap to edit</Text>
           </View>
         </View>
 
@@ -275,7 +299,6 @@ const ViewAll = () => {
       </View>
 
       {/* Filter Buttons */}
-
       <View style={styles.filterContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {(['ALL', 'PAID', 'PARTIAL', 'PENDING'] as FilterType[]).map(
@@ -451,6 +474,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    marginRight: 8,
   },
   filterButtonActive: {
     backgroundColor: '#60A5FA',
@@ -481,6 +505,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -494,15 +520,25 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flex: 1,
   },
+  cardActions: {
+    alignItems: 'flex-end',
+  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    marginBottom: 4,
   },
   statusText: {
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
+  },
+  editHint: {
+    fontSize: 10,
+    color: '#60A5FA',
+    fontStyle: 'italic',
+    fontWeight: '500',
   },
   donatorInfo: {
     marginBottom: 16,
