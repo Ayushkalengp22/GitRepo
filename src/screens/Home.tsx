@@ -1,294 +1,593 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  FlatList,
-  ActivityIndicator,
   StyleSheet,
   SafeAreaView,
-  TextInput,
+  ScrollView,
   TouchableOpacity,
-  Image,
+  ActivityIndicator,
+  Alert,
   RefreshControl,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {
+  donationAPI,
+  DonationApiError,
+  Donator,
+  DonationSummary,
+  donationUtils,
+} from '../Api/donationAPI';
+import {useAuth} from '../context/AuthContext';
 
-type Repo = {
-  id: number;
-  name: string;
-  description: string;
-  stargazers_count: number;
-  forks_count: number;
-  language: string;
-  owner: {
-    login: string;
-    avatar_url: string;
-  };
+// Navigation type
+type RootStackParamList = {
+  Home: undefined;
+  Details: undefined;
+  AddDonator: undefined;
+  ViewAll: undefined;
 };
 
-const GitRepoList = ({navigation}: any) => {
-  const [repos, setRepos] = useState<Repo[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>('react-native');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [favorites, setFavorites] = useState<Repo[]>([]);
-  const [showFavorites, setShowFavorites] = useState(false);
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const Home = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const {user, logout} = useAuth();
+
+  const [summary, setSummary] = useState<DonationSummary | null>(null);
+  const [recentDonations, setRecentDonations] = useState<Donator[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchRepos(searchQuery);
-    loadFavorites();
+    loadDashboardData();
   }, []);
 
-  const fetchRepos = async (query: string) => {
-    setLoading(true);
-    setError(null);
+  // Add navigation listener to refresh data when returning to screen
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('📱 Home screen focused, refreshing data...');
+      loadDashboardData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadDashboardData = async () => {
+    console.log('🏠 Starting to load dashboard data...');
+
     try {
-      const response = await fetch(
-        `https://api.github.com/search/repositories?q=${query}`,
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch repositories');
+      setIsLoading(true);
+
+      console.log('📊 Calling getDonationSummary...');
+      // Load summary first to debug it specifically
+      const summaryData = await donationAPI.getDonationSummary();
+      console.log('✅ Summary data received:', summaryData);
+      setSummary(summaryData);
+
+      console.log('👥 Calling getAllDonators...');
+      const donatorsData = await donationAPI.getAllDonators();
+      console.log('✅ Donators data received:', donatorsData);
+
+      // Get recent donations (last 10, sorted by latest)
+      const recent = donatorsData
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+        .slice(0, 10);
+
+      console.log('📋 Recent donations prepared:', recent);
+      setRecentDonations(recent);
+
+      console.log('🎉 Dashboard data loaded successfully!');
+    } catch (error) {
+      console.log('❌ Error loading dashboard data:');
+      console.log('   Error type:', typeof error);
+      console.log('   Error:', error);
+
+      if (error instanceof DonationApiError) {
+        console.log(
+          '   DonationApiError - Status:',
+          error.status,
+          'Message:',
+          error.message,
+        );
+        Alert.alert('API Error', `Status ${error.status}: ${error.message}`);
+      } else {
+        console.log('   Unknown error:', error);
+        Alert.alert(
+          'Error',
+          'Failed to load dashboard data - Check console for details',
+        );
       }
-      const data = await response.json();
-      setRepos(data.items || []);
-    } catch (err) {
-      setError('Failed to fetch repositories');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setIsLoading(false);
     }
   };
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.length > 2) {
-      fetchRepos(text);
-    }
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await loadDashboardData();
+    setIsRefreshing(false);
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchRepos(searchQuery);
+  const handleAddDonator = () => {
+    // Navigate to Add Donator screen
+    navigation.navigate('AddDonator');
   };
 
-  const toggleFavorite = async (repo: Repo) => {
-    let updatedFavorites = [...favorites];
-    const index = updatedFavorites.findIndex(fav => fav.id === repo.id);
-
-    if (index !== -1) {
-      updatedFavorites.splice(index, 1);
-    } else {
-      updatedFavorites.push(repo);
-    }
-
-    setFavorites(updatedFavorites);
-    await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+  const handleViewAll = () => {
+    // Navigate to View All Donations screen
+    navigation.navigate('ViewAll');
   };
 
-  const loadFavorites = async () => {
-    const storedFavorites = await AsyncStorage.getItem('favorites');
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
-    }
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: logout,
+      },
+    ]);
   };
 
-  const isFavorite = (repoId: number) => {
-    return favorites.some(fav => fav.id === repoId);
+  const getDonationStatus = (donator: Donator) => {
+    // Get the overall status based on all donations
+    const totalAmount = getTotalAmount(donator);
+    const totalPaid = getTotalPaidAmount(donator);
+
+    if (totalPaid >= totalAmount) return 'PAID';
+    if (totalPaid > 0) return 'PARTIAL';
+    return 'PENDING';
   };
 
-  const renderItem = ({item}: {item: Repo}) => (
-    <TouchableOpacity
-      style={styles.repoItem}
-      onPress={() => navigation.navigate('Details', {repo: item})}>
-      <View style={styles.itemHeader}>
-        <Image source={{uri: item.owner.avatar_url}} style={styles.avatar} />
-        <View style={styles.headerText}>
-          <Text style={styles.repoName}>{item.name}</Text>
-          <Text style={styles.ownerName}>@{item.owner.login}</Text>
-        </View>
-        <TouchableOpacity onPress={() => toggleFavorite(item)}>
-          <Text style={styles.favoriteIcon}>
-            {isFavorite(item.id) ? '⭐' : '☆'}
-          </Text>
-        </TouchableOpacity>
+  const getTotalAmount = (donator: Donator) => {
+    return donator.donations.reduce(
+      (sum, donation) => sum + donation.amount,
+      0,
+    );
+  };
+
+  const getTotalPaidAmount = (donator: Donator) => {
+    return donator.donations.reduce(
+      (sum, donation) => sum + donation.paidAmount,
+      0,
+    );
+  };
+
+  const getTotalBalance = (donator: Donator) => {
+    return donator.donations.reduce(
+      (sum, donation) => sum + donation.balance,
+      0,
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#60A5FA" />
+        <Text style={styles.loadingText}>Loading Dashboard...</Text>
       </View>
-
-      <Text numberOfLines={2} style={styles.description}>
-        {item.description || 'No description'}
-      </Text>
-
-      <View style={styles.statsContainer}>
-        <Text style={styles.statNumber}>⭐ {item.stargazers_count}</Text>
-        <Text style={styles.statNumber}>🍴 {item.forks_count}</Text>
-        <Text style={styles.statNumber}>🏷 {item.language || 'N/A'}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>GitHub Explorer</Text>
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search repositories..."
-            placeholderTextColor="#666"
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
-        <TouchableOpacity
-          style={styles.favButton}
-          onPress={() => setShowFavorites(!showFavorites)}>
-          <Text style={styles.favButtonText}>
-            {showFavorites ? 'Show All Repos' : 'Show Favorites'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {loading && !refreshing && (
-        <ActivityIndicator style={styles.loader} size="large" color="#0366d6" />
-      )}
-
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.error}>{error}</Text>
-        </View>
-      )}
-
-      <FlatList
-        data={showFavorites ? favorites : repos}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
+      <ScrollView
+        style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Dashboard</Text>
+            <Text style={styles.subtitle}>Collection Overview</Text>
+            <Text style={styles.welcomeText}>Welcome, {user?.email}</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.notificationIcon}>
+              <Text style={styles.bellIcon}>🔔</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}>
+              <Text style={styles.logoutIcon}>🚪</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Summary Cards */}
+        <View style={styles.summaryContainer}>
+          {/* Total Amount */}
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryAmount, {color: '#60A5FA'}]}>
+              ₹{summary?.totalAmount.toLocaleString('en-IN') || '0'}
+            </Text>
+            <Text style={styles.summaryLabel}>TOTAL AMOUNT</Text>
+          </View>
+
+          {/* Paid Amount */}
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryAmount, {color: '#22C55E'}]}>
+              ₹{summary?.totalPaid.toLocaleString('en-IN') || '0'}
+            </Text>
+            <Text style={styles.summaryLabel}>PAID AMOUNT</Text>
+          </View>
+
+          {/* Balance Due */}
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryAmount, {color: '#F97316'}]}>
+              ₹{summary?.totalBalance.toLocaleString('en-IN') || '0'}
+            </Text>
+            <Text style={styles.summaryLabel}>BALANCE DUE</Text>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleAddDonator}>
+            <View style={styles.actionIcon}>
+              <Text style={styles.plusIcon}>+</Text>
+            </View>
+            <Text style={styles.actionText}>Add Donator</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={handleViewAll}>
+            <View style={styles.actionIcon}>
+              <Text style={styles.clipboardIcon}>📋</Text>
+            </View>
+            <Text style={styles.actionText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Recent Donations */}
+        <View style={styles.recentContainer}>
+          <Text style={styles.recentTitle}>Recent Donations</Text>
+
+          {recentDonations.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No donations found</Text>
+            </View>
+          ) : (
+            recentDonations.map(donator => (
+              <TouchableOpacity key={donator.id} style={styles.donationCard}>
+                <View style={styles.donationInfo}>
+                  <Text style={styles.donatorName}>{donator.name}</Text>
+
+                  {/* Amount Details */}
+                  <View style={styles.amountContainer}>
+                    <View style={styles.amountRow}>
+                      <Text style={styles.amountLabel}>Total:</Text>
+                      <Text style={styles.amountValue}>
+                        ₹{getTotalAmount(donator).toLocaleString('en-IN')}
+                      </Text>
+                    </View>
+
+                    <View style={styles.amountRow}>
+                      <Text style={styles.amountLabel}>Paid:</Text>
+                      <Text style={[styles.amountValue, {color: '#22C55E'}]}>
+                        ₹{getTotalPaidAmount(donator).toLocaleString('en-IN')}
+                      </Text>
+                    </View>
+
+                    <View style={styles.amountRow}>
+                      <Text style={styles.amountLabel}>Balance:</Text>
+                      <Text style={[styles.amountValue, {color: '#F97316'}]}>
+                        ₹{getTotalBalance(donator).toLocaleString('en-IN')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Phone Number */}
+                  {donator.phone && (
+                    <Text style={styles.donatorPhone}>📞 {donator.phone}</Text>
+                  )}
+                </View>
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: getStatusBadgeColor(
+                        getDonationStatus(donator),
+                      ),
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      {color: getStatusTextColor(getDonationStatus(donator))},
+                    ]}>
+                    {getDonationStatus(donator)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
+};
+
+// Helper functions for status colors
+const getStatusBadgeColor = (status: string) => {
+  switch (status) {
+    case 'PAID':
+      return '#DCFCE7';
+    case 'PARTIAL':
+      return '#FEF3C7';
+    case 'PENDING':
+      return '#FEE2E2';
+    default:
+      return '#F3F4F6';
+  }
+};
+
+const getStatusTextColor = (status: string) => {
+  switch (status) {
+    case 'PAID':
+      return '#166534';
+    case 'PARTIAL':
+      return '#92400E';
+    case 'PENDING':
+      return '#DC2626';
+    default:
+      return '#6B7280';
+  }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eaecef',
-    // New styling for header - adding shadow and elevation for depth
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
-    elevation: 3,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 32,
   },
   title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#24292e',
-    marginBottom: 10,
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
   },
-  searchContainer: {
-    marginBottom: 10,
+  subtitle: {
+    fontSize: 18,
+    color: '#6B7280',
   },
-  searchBar: {
-    height: 48,
-    backgroundColor: '#f6f8fa',
-    borderWidth: 1,
-    borderColor: '#e1e4e8',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#24292e',
+  welcomeText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
   },
-  favButton: {
-    padding: 12,
-    backgroundColor: '#0366d6',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  favButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  loader: {
-    marginVertical: 20,
-  },
-  errorContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  error: {
-    color: 'red',
-    fontSize: 16,
-  },
-  listContainer: {
-    padding: 16,
-  },
-  repoItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#eaecef',
-    // New styling for repo item - subtle shadow for depth
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: {width: 0, height: 1},
-    elevation: 1,
-  },
-  itemHeader: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  avatar: {
+  notificationIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutIcon: {
+    fontSize: 16,
+  },
+  bellIcon: {
+    fontSize: 20,
+  },
+  summaryContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  summaryAmount: {
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    marginBottom: 32,
+    gap: 16,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  actionIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    marginRight: 12,
-  },
-  headerText: {
-    flex: 1,
-  },
-  repoName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#24292e',
-  },
-  ownerName: {
-    fontSize: 14,
-    color: '#0366d6',
-  },
-  description: {
-    fontSize: 15,
-    color: '#57606a',
-    lineHeight: 22,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  statsContainer: {
+  plusIcon: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  clipboardIcon: {
+    fontSize: 20,
+  },
+  actionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  recentContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  recentTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  emptyState: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 48,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  donationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 12,
+    alignItems: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  statNumber: {
+  donationInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  donatorName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  amountContainer: {
+    marginBottom: 8,
+  },
+  amountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  amountLabel: {
     fontSize: 14,
-    color: '#24292e',
+    color: '#6B7280',
+    fontWeight: '500',
+    minWidth: 60,
+  },
+  amountValue: {
+    fontSize: 14,
+    color: '#1F2937',
+    fontWeight: '600',
+  },
+  donatorPhone: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  donationDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  donationAmount: {
+    fontSize: 14,
+    color: '#6B7280',
     fontWeight: '500',
   },
-  favoriteIcon: {
-    fontSize: 26,
-    paddingHorizontal: 10,
-    color: '#0366d6',
+  separator: {
+    fontSize: 14,
+    color: '#D1D5DB',
+    marginHorizontal: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
 });
 
-export default GitRepoList;
+export default Home;
