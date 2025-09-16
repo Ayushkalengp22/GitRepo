@@ -315,7 +315,24 @@ const Home = () => {
       0,
     );
   };
+
+  // New helper functions for payment methods and users
+  const getUniquePaymentMethods = (donator: Donator): string[] => {
+    const methods = donator.donations
+      .map(donation => donation.paymentMethod)
+      .filter(method => method && method !== 'Not Done');
+    return Array.from(new Set(methods));
+  };
+
+  const getUniqueUsers = (donator: Donator): string[] => {
+    const users = donator.donations
+      .map(donation => donation.user?.name)
+      .filter(Boolean) as string[];
+    return Array.from(new Set(users));
+  };
+
   console.log(JSON.stringify(recentDonations, null, 2), 'recentDonations==');
+
   const renderBookDetailsModal = () => (
     <Modal
       visible={showBookDetailsModal}
@@ -790,74 +807,95 @@ const Home = () => {
               <Text style={styles.emptyText}>No donations found</Text>
             </View>
           ) : (
-            recentDonations.map(donator => (
-              <TouchableOpacity key={donator.id} style={styles.donationCard}>
-                <View style={styles.donationInfo}>
-                  <Text style={styles.donatorName}>{donator.name}</Text>
+            recentDonations.map(donator => {
+              const paymentMethods = getUniquePaymentMethods(donator);
+              const users = getUniqueUsers(donator);
 
-                  {/* Amount Details */}
-                  <View style={styles.amountContainer}>
-                    <View style={styles.amountRow}>
-                      <Text style={styles.amountLabel}>Total:</Text>
-                      <Text style={styles.amountValue}>
-                        ₹{getTotalAmount(donator).toLocaleString('en-IN')}
-                      </Text>
+              return (
+                <TouchableOpacity key={donator.id} style={styles.donationCard}>
+                  <View style={styles.donationInfo}>
+                    <Text style={styles.donatorName}>{donator.name}</Text>
+
+                    {/* Amount Details */}
+                    <View style={styles.amountContainer}>
+                      <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Total:</Text>
+                        <Text style={styles.amountValue}>
+                          ₹{getTotalAmount(donator).toLocaleString('en-IN')}
+                        </Text>
+                      </View>
+
+                      <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Paid:</Text>
+                        <Text style={[styles.amountValue, {color: '#22C55E'}]}>
+                          ₹{getTotalPaidAmount(donator).toLocaleString('en-IN')}
+                        </Text>
+                      </View>
+
+                      <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Balance:</Text>
+                        <Text style={[styles.amountValue, {color: '#F97316'}]}>
+                          ₹{getTotalBalance(donator).toLocaleString('en-IN')}
+                        </Text>
+                      </View>
                     </View>
 
-                    <View style={styles.amountRow}>
-                      <Text style={styles.amountLabel}>Paid:</Text>
-                      <Text style={[styles.amountValue, {color: '#22C55E'}]}>
-                        ₹{getTotalPaidAmount(donator).toLocaleString('en-IN')}
+                    {/* Phone Number */}
+                    {donator.phone && (
+                      <Text style={styles.donatorPhone}>
+                        📞 {donator.phone}
                       </Text>
-                    </View>
+                    )}
 
-                    <View style={styles.amountRow}>
-                      <Text style={styles.amountLabel}>Balance:</Text>
-                      <Text style={[styles.amountValue, {color: '#F97316'}]}>
-                        ₹{getTotalBalance(donator).toLocaleString('en-IN')}
+                    {/* Book Numbers */}
+                    {donator.donations.some(d => d.bookNumber) && (
+                      <Text style={styles.donatorBooks}>
+                        📚 Recipt Book:{' '}
+                        {Array.from(
+                          new Set(
+                            donator.donations
+                              .map(d => d.bookNumber)
+                              .filter(Boolean),
+                          ),
+                        ).join(', ')}
                       </Text>
-                    </View>
+                    )}
+
+                    {/* Payment Methods */}
+                    {paymentMethods.length > 0 && (
+                      <Text style={styles.donatorPaymentMethods}>
+                        💳 Payment: {paymentMethods.join(', ')}
+                      </Text>
+                    )}
+
+                    {/* Added By */}
+                    {users.length > 0 && (
+                      <Text style={styles.donatorAddedBy}>
+                        👤 Added by: {users.join(', ')}
+                      </Text>
+                    )}
                   </View>
 
-                  {/* Phone Number */}
-                  {donator.phone && (
-                    <Text style={styles.donatorPhone}>📞 {donator.phone}</Text>
-                  )}
-
-                  {/* Book Numbers */}
-                  {donator.donations.some(d => d.bookNumber) && (
-                    <Text style={styles.donatorBooks}>
-                      📚 Books:{' '}
-                      {Array.from(
-                        new Set(
-                          donator.donations
-                            .map(d => d.bookNumber)
-                            .filter(Boolean),
-                        ),
-                      ).join(', ')}
-                    </Text>
-                  )}
-                </View>
-
-                <View
-                  style={[
-                    styles.statusBadge,
-                    {
-                      backgroundColor: getStatusBadgeColor(
-                        getDonationStatus(donator),
-                      ),
-                    },
-                  ]}>
-                  <Text
+                  <View
                     style={[
-                      styles.statusText,
-                      {color: getStatusTextColor(getDonationStatus(donator))},
+                      styles.statusBadge,
+                      {
+                        backgroundColor: getStatusBadgeColor(
+                          getDonationStatus(donator),
+                        ),
+                      },
                     ]}>
-                    {getDonationStatus(donator)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))
+                    <Text
+                      style={[
+                        styles.statusText,
+                        {color: getStatusTextColor(getDonationStatus(donator))},
+                      ]}>
+                      {getDonationStatus(donator)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -1534,6 +1572,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   donatorBooks: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  donatorPaymentMethods: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  donatorAddedBy: {
     fontSize: 12,
     color: '#9CA3AF',
     marginTop: 4,
