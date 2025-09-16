@@ -14,6 +14,7 @@
 // getDonationSummary() - Get overall donation summary
 // getDonationsByBook() - Get donations by book number (ADMIN only)
 // getBookSummary() - Get book-wise summary (ADMIN only)
+// downloadDonorsPDF() - Generate and download donors financial report PDF ✅ NEW
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -109,6 +110,12 @@ export interface ApiErrorResponse {
   error: string;
 }
 
+// ✅ NEW: PDF Response interface
+export interface PDFDownloadResponse {
+  blob: Blob;
+  filename: string;
+}
+
 // ==================== ERROR HANDLING ====================
 
 export class DonationApiError extends Error {
@@ -120,6 +127,7 @@ export class DonationApiError extends Error {
   }
 }
 
+import {Alert} from 'react-native';
 // ==================== API CONFIGURATION ====================
 
 // const API_BASE_URL =
@@ -142,6 +150,38 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
   }
 
   return data as T;
+}
+
+// ✅ NEW: Helper function to handle PDF responses
+async function handlePDFResponse(
+  response: Response,
+): Promise<PDFDownloadResponse> {
+  if (!response.ok) {
+    // Try to get error message from response
+    try {
+      const errorData = await response.json();
+      const errorMessage = errorData.error || 'PDF generation failed';
+      throw new DonationApiError(errorMessage, response.status);
+    } catch {
+      // If response is not JSON, use generic error
+      throw new DonationApiError('PDF generation failed', response.status);
+    }
+  }
+
+  const blob = await response.blob();
+
+  // Extract filename from Content-Disposition header if available
+  const contentDisposition = response.headers.get('Content-Disposition');
+  let filename = 'donors_report.pdf'; // Default filename
+
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+    if (filenameMatch) {
+      filename = filenameMatch[1];
+    }
+  }
+
+  return {blob, filename};
 }
 
 // ==================== DONATION API FUNCTIONS ====================
@@ -340,6 +380,28 @@ export const donationAPI = {
       );
     }
   },
+
+  // ✅ NEW: 📄 Download Donors Financial Report PDF
+  downloadDonorsPDF: async (): Promise<PDFDownloadResponse> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pdf`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/pdf',
+        },
+      });
+
+      return await handlePDFResponse(response);
+    } catch (error: any) {
+      if (error instanceof DonationApiError) {
+        throw error;
+      }
+      throw new DonationApiError(
+        'Network error. Please check your connection.',
+        0,
+      );
+    }
+  },
 };
 
 // ==================== UTILITY FUNCTIONS ====================
@@ -382,5 +444,92 @@ export const donationUtils = {
       default:
         return '#6B7280'; // Gray
     }
+  },
+
+  // ✅ NEW: Save PDF blob to device (React Native specific)
+  savePDFToDevice: async (blob: Blob, filename: string): Promise<string> => {
+    try {
+      // For React Native, you'll need react-native-fs or similar
+      // This is a placeholder - actual implementation depends on your file handling setup
+
+      // Convert blob to base64
+      const reader = new FileReader();
+
+      return new Promise((resolve, reject) => {
+        reader.onload = () => {
+          const base64Data = reader.result as string;
+          // Remove the data:application/pdf;base64, prefix
+          const base64 = base64Data.split(',')[1];
+
+          // Here you would use react-native-fs or similar to save the file
+          // Example with react-native-fs:
+          // const RNFS = require('react-native-fs');
+          // const path = `${RNFS.DownloadDirectoryPath}/${filename}`;
+          // RNFS.writeFile(path, base64, 'base64').then(() => resolve(path));
+
+          // For now, return the base64 string
+          resolve(base64);
+        };
+
+        reader.onerror = () => reject(new Error('Failed to read PDF blob'));
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      throw new DonationApiError('Failed to save PDF to device', 0);
+    }
+  },
+
+  // ✅ NEW: Show PDF download confirmation dialog
+  showPDFDownloadDialog: (
+    onConfirm: () => void,
+    onCancel?: () => void,
+  ): void => {
+    Alert.alert(
+      'Download PDF Report',
+      'This will generate and download a complete financial report of all donors. Continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel' as const,
+          onPress: onCancel,
+        },
+        {
+          text: 'Download',
+          style: 'default' as const,
+          onPress: onConfirm,
+        },
+      ],
+    );
+  },
+
+  // ✅ NEW: Show PDF success dialog
+  showPDFSuccessDialog: (filePath: string): void => {
+    Alert.alert(
+      'PDF Downloaded Successfully!',
+      `Report saved as: ${filePath}`,
+      [
+        {
+          text: 'OK',
+          style: 'default' as const,
+        },
+      ],
+    );
+  },
+
+  // ✅ NEW: Show PDF error dialog
+  showPDFErrorDialog: (error: string): void => {
+    Alert.alert('PDF Download Failed', error, [
+      {
+        text: 'OK',
+        style: 'default' as const,
+      },
+    ]);
+  },
+
+  // ✅ NEW: Generate filename with timestamp
+  generatePDFFilename: (): string => {
+    const now = new Date();
+    const timestamp = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    return `donors_report_${timestamp}.pdf`;
   },
 };
