@@ -149,10 +149,8 @@ const AddDonator = () => {
   const paymentMethods: PaymentMethod[] = ['Not Done', 'Cash', 'Online'];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -160,121 +158,187 @@ const AddDonator = () => {
             onPress={() => navigation.goBack()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Add New Donator</Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>Add New Donator</Text>
+            <Text style={styles.subtitle}>Fill in the donation details</Text>
+          </View>
         </View>
 
-        <View style={styles.form}>
-          {/* Donator Name - Required */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Donator Name <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter donator name"
-              placeholderTextColor="#9CA3AF"
-              value={formData.name}
-              onChangeText={value => handleInputChange('name', value)}
-              autoCapitalize="words"
-            />
-          </View>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+          <View style={styles.formContainer}>
+            {/* Personal Information Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Personal Information</Text>
+                <View style={styles.sectionIcon}>
+                  <Text style={styles.sectionEmoji}>👤</Text>
+                </View>
+              </View>
 
-          {/* Phone Number */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter phone number"
-              placeholderTextColor="#9CA3AF"
-              value={formData.phone}
-              onChangeText={value => handleInputChange('phone', value)}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-          </View>
+              {/* Donator Name - Required */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  Donator Name <Text style={styles.required}>*</Text>
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter full name"
+                  placeholderTextColor="#64748B"
+                  value={formData.name}
+                  onChangeText={value => handleInputChange('name', value)}
+                  autoCapitalize="words"
+                />
+              </View>
 
-          {/* Address */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              placeholder="Enter address"
-              placeholderTextColor="#9CA3AF"
-              value={formData.address}
-              onChangeText={value => handleInputChange('address', value)}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
+              {/* Phone Number */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Phone Number</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter 10-digit phone number"
+                  placeholderTextColor="#64748B"
+                  value={formData.phone}
+                  onChangeText={value => handleInputChange('phone', value)}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+              </View>
 
-          {/* Donation Amount - Required */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Donation Amount <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter donation amount"
-              placeholderTextColor="#9CA3AF"
-              value={formData.amount}
-              onChangeText={value => handleInputChange('amount', value)}
-              keyboardType="numeric"
-            />
-          </View>
+              {/* Address */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Address</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  placeholder="Enter complete address"
+                  placeholderTextColor="#64748B"
+                  value={formData.address}
+                  onChangeText={value => handleInputChange('address', value)}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
 
-          {/* Paid Amount */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Paid Amount</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter paid amount (optional)"
-              placeholderTextColor="#9CA3AF"
-              value={formData.paidAmount}
-              onChangeText={value => handleInputChange('paidAmount', value)}
-              keyboardType="numeric"
-            />
-          </View>
+            {/* Donation Details Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Donation Details</Text>
+                <View style={styles.sectionIcon}>
+                  <Text style={styles.sectionEmoji}>💰</Text>
+                </View>
+              </View>
 
-          {/* Payment Method */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Payment Method</Text>
-            <View style={styles.paymentMethodContainer}>
-              {paymentMethods.map(method => (
-                <TouchableOpacity
-                  key={method}
-                  style={[
-                    styles.paymentMethodButton,
-                    formData.paymentMethod === method &&
-                      styles.paymentMethodActive,
-                  ]}
-                  onPress={() => handleInputChange('paymentMethod', method)}>
-                  <Text
-                    style={[
-                      styles.paymentMethodText,
-                      formData.paymentMethod === method &&
-                        styles.paymentMethodTextActive,
-                    ]}>
-                    {method}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {/* Donation Amount - Required */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  Donation Amount <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.amountInputContainer}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.amountInput]}
+                    placeholder="0.00"
+                    placeholderTextColor="#64748B"
+                    value={formData.amount}
+                    onChangeText={value => handleInputChange('amount', value)}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Paid Amount */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Paid Amount</Text>
+                <View style={styles.amountInputContainer}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.amountInput]}
+                    placeholder="0.00 (optional)"
+                    placeholderTextColor="#64748B"
+                    value={formData.paidAmount}
+                    onChangeText={value =>
+                      handleInputChange('paidAmount', value)
+                    }
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              {/* Balance Preview */}
+              {formData.amount && (
+                <View style={styles.balancePreview}>
+                  <View style={styles.balanceRow}>
+                    <Text style={styles.balanceLabel}>Balance Due:</Text>
+                    <Text style={styles.balanceValue}>
+                      ₹
+                      {(
+                        parseFloat(formData.amount || '0') -
+                        parseFloat(formData.paidAmount || '0')
+                      ).toLocaleString('en-IN')}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Payment Method */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Payment Method</Text>
+                <View style={styles.paymentMethodContainer}>
+                  {paymentMethods.map(method => (
+                    <TouchableOpacity
+                      key={method}
+                      style={[
+                        styles.paymentMethodButton,
+                        formData.paymentMethod === method &&
+                          styles.paymentMethodActive,
+                      ]}
+                      onPress={() =>
+                        handleInputChange('paymentMethod', method)
+                      }>
+                      <View style={styles.paymentMethodContent}>
+                        <Text style={styles.paymentMethodIcon}>
+                          {method === 'Cash'
+                            ? '💵'
+                            : method === 'Online'
+                            ? '💳'
+                            : '⏳'}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.paymentMethodText,
+                            formData.paymentMethod === method &&
+                              styles.paymentMethodTextActive,
+                          ]}>
+                          {method}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Book Number */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Book Number</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter book number (optional)"
+                  placeholderTextColor="#64748B"
+                  value={formData.bookNumber}
+                  onChangeText={value => handleInputChange('bookNumber', value)}
+                  autoCapitalize="characters"
+                />
+              </View>
             </View>
           </View>
+        </ScrollView>
 
-          {/* Book Number */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Book Number</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter book number (optional)"
-              placeholderTextColor="#9CA3AF"
-              value={formData.bookNumber}
-              onChangeText={value => handleInputChange('bookNumber', value)}
-            />
-          </View>
-
-          {/* Submit Button */}
+        {/* Fixed Bottom Submit Button */}
+        <View style={styles.submitContainer}>
           <TouchableOpacity
             style={[
               styles.submitButton,
@@ -283,126 +347,270 @@ const AddDonator = () => {
             onPress={handleSubmit}
             disabled={isLoading}>
             {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <View style={styles.loadingContent}>
+                <ActivityIndicator size="small" color="#F1F5F9" />
+                <Text style={styles.loadingText}>Adding Donator...</Text>
+              </View>
             ) : (
-              <Text style={styles.submitButtonText}>Add Donator</Text>
+              <View style={styles.submitContent}>
+                <Text style={styles.submitIcon}>+</Text>
+                <Text style={styles.submitButtonText}>Add Donator</Text>
+              </View>
             )}
           </TouchableOpacity>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0F172A',
   },
-  scrollView: {
+  safeArea: {
     flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(100, 116, 139, 0.2)',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   backIcon: {
-    fontSize: 20,
-    color: '#374151',
+    fontSize: 18,
+    color: '#E2E8F0',
+    fontWeight: '600',
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#F1F5F9',
   },
-  form: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
+  subtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Space for fixed submit button
+  },
+  formContainer: {
+    padding: 20,
+  },
+  section: {
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
+  },
+  sectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.2)',
+  },
+  sectionEmoji: {
+    fontSize: 14,
   },
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#E2E8F0',
     marginBottom: 8,
   },
   required: {
-    color: '#EF4444',
+    color: '#F87171',
+    fontWeight: '700',
   },
   textInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(51, 65, 85, 0.8)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    color: '#374151',
+    color: '#F1F5F9',
+    minHeight: 50,
   },
   textArea: {
     height: 80,
-    paddingTop: 16,
+    paddingTop: 14,
+  },
+  amountInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(51, 65, 85, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    borderRadius: 12,
+    paddingLeft: 16,
+    minHeight: 50,
+  },
+  currencySymbol: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#60A5FA',
+    marginRight: 8,
+  },
+  amountInput: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    paddingLeft: 0,
+    paddingVertical: 14,
+    minHeight: 'auto',
+  },
+  balancePreview: {
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.2)',
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  balanceValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#60A5FA',
   },
   paymentMethodContainer: {
-    flexDirection: 'row',
     gap: 12,
   },
   paymentMethodButton: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   paymentMethodActive: {
-    backgroundColor: '#60A5FA',
-    borderColor: '#60A5FA',
+    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+    borderColor: 'rgba(96, 165, 250, 0.5)',
+  },
+  paymentMethodContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  paymentMethodIcon: {
+    fontSize: 16,
   },
   paymentMethodText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#94A3B8',
+    flex: 1,
   },
   paymentMethodTextActive: {
-    color: '#FFFFFF',
+    color: '#60A5FA',
+    fontWeight: '600',
+  },
+  submitContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(100, 116, 139, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingBottom: 32,
   },
   submitButton: {
-    backgroundColor: '#60A5FA',
-    borderRadius: 12,
-    paddingVertical: 18,
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 16,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+    minHeight: 56,
   },
   submitButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: 'rgba(100, 116, 139, 0.5)',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+  },
+  submitContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  submitIcon: {
+    fontSize: 18,
+    color: '#F1F5F9',
+    fontWeight: '600',
   },
   submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
+    color: '#F1F5F9',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  loadingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: '#F1F5F9',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

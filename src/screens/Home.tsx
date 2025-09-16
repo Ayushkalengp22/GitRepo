@@ -11,6 +11,7 @@ import {
   RefreshControl,
   TextInput,
   Modal,
+  Dimensions,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -25,6 +26,8 @@ import {
   Donation,
 } from '../Api/donationAPI';
 import {useAuth} from '../context/AuthContext';
+
+const {width} = Dimensions.get('window');
 
 // Navigation type
 type RootStackParamList = {
@@ -336,110 +339,113 @@ const Home = () => {
   const renderBookDetailsModal = () => (
     <Modal
       visible={showBookDetailsModal}
-      animationType="slide"
+      animationType="fade"
       presentationStyle="pageSheet">
-      <SafeAreaView style={styles.bookDetailsContainer}>
-        <View style={styles.bookDetailsHeader}>
-          <TouchableOpacity onPress={() => setShowBookDetailsModal(false)}>
-            <Text style={styles.bookDetailsClose}>✕</Text>
-          </TouchableOpacity>
-          <Text style={styles.bookDetailsTitle}>
-            Book {selectedBookSummary?.bookNumber} Details
-          </Text>
-          <View style={styles.bookDetailsPlaceholder} />
-        </View>
-
-        {selectedBookSummary && (
-          <View style={styles.bookDetailsSummary}>
-            <Text style={styles.bookDetailsSummaryTitle}>Summary</Text>
-            <View style={styles.bookDetailsSummaryGrid}>
-              <View style={styles.bookDetailsSummaryItem}>
-                <Text
-                  style={[styles.bookDetailsSummaryAmount, {color: '#60A5FA'}]}>
-                  ₹{selectedBookSummary.totalAmount.toLocaleString('en-IN')}
-                </Text>
-                <Text style={styles.bookDetailsSummaryLabel}>Total</Text>
-              </View>
-
-              <View style={styles.bookDetailsSummaryItem}>
-                <Text
-                  style={[styles.bookDetailsSummaryAmount, {color: '#22C55E'}]}>
-                  ₹{selectedBookSummary.totalPaid.toLocaleString('en-IN')}
-                </Text>
-                <Text style={styles.bookDetailsSummaryLabel}>Paid</Text>
-              </View>
-
-              <View style={styles.bookDetailsSummaryItem}>
-                <Text
-                  style={[styles.bookDetailsSummaryAmount, {color: '#F97316'}]}>
-                  ₹{selectedBookSummary.totalBalance.toLocaleString('en-IN')}
-                </Text>
-                <Text style={styles.bookDetailsSummaryLabel}>Balance</Text>
-              </View>
-            </View>
-
-            <View style={styles.bookProgressContainer}>
-              <Text style={styles.bookProgressText}>
-                Collection Progress:{' '}
-                {(
-                  (selectedBookSummary.totalPaid /
-                    selectedBookSummary.totalAmount) *
-                  100
-                ).toFixed(1)}
-                %
-              </Text>
-              <View style={styles.bookProgressBar}>
-                <View
-                  style={[
-                    styles.bookProgressFill,
-                    {
-                      width: `${
-                        (selectedBookSummary.totalPaid /
-                          selectedBookSummary.totalAmount) *
-                        100
-                      }%`,
-                      backgroundColor:
-                        selectedBookSummary.totalBalance === 0
-                          ? '#22C55E'
-                          : '#60A5FA',
-                    },
-                  ]}
-                />
-              </View>
-            </View>
+      <View style={styles.modalBackground}>
+        <SafeAreaView style={styles.bookDetailsContainer}>
+          <View style={styles.bookDetailsHeader}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowBookDetailsModal(false)}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.bookDetailsTitle}>
+              Book {selectedBookSummary?.bookNumber}
+            </Text>
+            <View style={styles.bookDetailsPlaceholder} />
           </View>
-        )}
 
-        <View style={styles.donationsListContainer}>
-          <Text style={styles.donationsListTitle}>
-            All Donations ({selectedBookDonations.length})
-          </Text>
+          {selectedBookSummary && (
+            <View style={styles.bookDetailsSummary}>
+              <View style={styles.summaryStatsGrid}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    ₹{selectedBookSummary.totalAmount.toLocaleString('en-IN')}
+                  </Text>
+                  <Text style={styles.statLabel}>Total Amount</Text>
+                  <View
+                    style={[styles.statIndicator, {backgroundColor: '#60A5FA'}]}
+                  />
+                </View>
 
-          {isLoadingBookDetails ? (
-            <View style={styles.bookDetailsLoading}>
-              <ActivityIndicator size="large" color="#60A5FA" />
-              <Text style={styles.bookDetailsLoadingText}>
-                Loading donations...
-              </Text>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    ₹{selectedBookSummary.totalPaid.toLocaleString('en-IN')}
+                  </Text>
+                  <Text style={styles.statLabel}>Paid Amount</Text>
+                  <View
+                    style={[styles.statIndicator, {backgroundColor: '#22C55E'}]}
+                  />
+                </View>
+
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    ₹{selectedBookSummary.totalBalance.toLocaleString('en-IN')}
+                  </Text>
+                  <Text style={styles.statLabel}>Balance Due</Text>
+                  <View
+                    style={[styles.statIndicator, {backgroundColor: '#F59E0B'}]}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.progressSection}>
+                <Text style={styles.progressTitle}>Collection Progress</Text>
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${
+                            (selectedBookSummary.totalPaid /
+                              selectedBookSummary.totalAmount) *
+                            100
+                          }%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>
+                    {(
+                      (selectedBookSummary.totalPaid /
+                        selectedBookSummary.totalAmount) *
+                      100
+                    ).toFixed(1)}
+                    %
+                  </Text>
+                </View>
+              </View>
             </View>
-          ) : (
-            <ScrollView
-              style={styles.donationsList}
-              showsVerticalScrollIndicator={false}>
-              {selectedBookDonations.map(donation => (
-                <View key={donation.id} style={styles.bookDonationCard}>
-                  <View style={styles.bookDonationHeader}>
-                    <Text style={styles.bookDonatorName}>
+          )}
+
+          <ScrollView
+            style={styles.donationsList}
+            showsVerticalScrollIndicator={false}>
+            <Text style={styles.donationsTitle}>
+              Donations ({selectedBookDonations.length})
+            </Text>
+
+            {isLoadingBookDetails ? (
+              <View style={styles.loadingSection}>
+                <ActivityIndicator size="large" color="#60A5FA" />
+                <Text style={styles.loadingText}>Loading donations...</Text>
+              </View>
+            ) : (
+              selectedBookDonations.map(donation => (
+                <View key={donation.id} style={styles.donationItem}>
+                  <View style={styles.donationHeader}>
+                    <Text style={styles.donorName}>
                       {donation.donator?.name || 'Unknown Donor'}
                     </Text>
                     <View
                       style={[
-                        styles.bookDonationStatusBadge,
+                        styles.statusChip,
                         {backgroundColor: getStatusBadgeColor(donation.status)},
                       ]}>
                       <Text
                         style={[
-                          styles.bookDonationStatusText,
+                          styles.statusChipText,
                           {color: getStatusTextColor(donation.status)},
                         ]}>
                         {donation.status}
@@ -447,97 +453,59 @@ const Home = () => {
                     </View>
                   </View>
 
-                  <View style={styles.bookDonationAmounts}>
-                    <View style={styles.bookDonationAmountRow}>
-                      <Text style={styles.bookDonationAmountLabel}>
-                        Amount:
-                      </Text>
-                      <Text
-                        style={[
-                          styles.bookDonationAmountValue,
-                          {color: '#60A5FA'},
-                        ]}>
+                  <View style={styles.donationAmounts}>
+                    <View style={styles.amountItem}>
+                      <Text style={styles.amountLabel}>Amount</Text>
+                      <Text style={[styles.amountValue, {color: '#60A5FA'}]}>
                         ₹{donation.amount.toLocaleString('en-IN')}
                       </Text>
                     </View>
-
-                    <View style={styles.bookDonationAmountRow}>
-                      <Text style={styles.bookDonationAmountLabel}>Paid:</Text>
-                      <Text
-                        style={[
-                          styles.bookDonationAmountValue,
-                          {color: '#22C55E'},
-                        ]}>
+                    <View style={styles.amountItem}>
+                      <Text style={styles.amountLabel}>Paid</Text>
+                      <Text style={[styles.amountValue, {color: '#22C55E'}]}>
                         ₹{donation.paidAmount.toLocaleString('en-IN')}
                       </Text>
                     </View>
-
-                    <View style={styles.bookDonationAmountRow}>
-                      <Text style={styles.bookDonationAmountLabel}>
-                        Balance:
-                      </Text>
-                      <Text
-                        style={[
-                          styles.bookDonationAmountValue,
-                          {color: '#F97316'},
-                        ]}>
+                    <View style={styles.amountItem}>
+                      <Text style={styles.amountLabel}>Balance</Text>
+                      <Text style={[styles.amountValue, {color: '#F59E0B'}]}>
                         ₹{donation.balance.toLocaleString('en-IN')}
                       </Text>
                     </View>
                   </View>
 
-                  <View style={styles.bookDonationInfo}>
-                    <View style={styles.bookDonationInfoRow}>
-                      <Text style={styles.bookDonationInfoLabel}>Payment:</Text>
+                  <View style={styles.donationMeta}>
+                    <View style={styles.metaItem}>
+                      <Text style={styles.metaLabel}>Payment Method</Text>
                       <View
                         style={[
-                          styles.paymentMethodBadge,
+                          styles.paymentChip,
                           {
                             backgroundColor: getPaymentMethodColor(
                               donation.paymentMethod,
                             ),
                           },
                         ]}>
-                        <Text style={styles.paymentMethodText}>
+                        <Text style={styles.paymentChipText}>
                           {donation.paymentMethod}
                         </Text>
                       </View>
                     </View>
-
                     {donation.user?.name && (
-                      <View style={styles.bookDonationInfoRow}>
-                        <Text style={styles.bookDonationInfoLabel}>
-                          Added by:
-                        </Text>
-                        <Text style={styles.bookDonationInfoValue}>
+                      <View style={styles.metaItem}>
+                        <Text style={styles.metaLabel}>Added by</Text>
+                        <Text style={styles.metaValue}>
                           {donation.user.name}
                         </Text>
                       </View>
                     )}
-
-                    <View style={styles.bookDonationInfoRow}>
-                      <Text style={styles.bookDonationInfoLabel}>Date:</Text>
-                      <Text style={styles.bookDonationInfoValue}>
-                        {new Date(donation.createdAt).toLocaleDateString(
-                          'en-IN',
-                        )}
-                      </Text>
-                    </View>
                   </View>
                 </View>
-              ))}
-
-              {selectedBookDonations.length === 0 && (
-                <View style={styles.emptyDonationsList}>
-                  <Text style={styles.emptyDonationsText}>
-                    No donations found for this book
-                  </Text>
-                </View>
-              )}
-            </ScrollView>
-          )}
-        </View>
-      </SafeAreaView>
+              ))
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </View>
     </Modal>
   );
 
@@ -545,29 +513,29 @@ const Home = () => {
   const getPaymentMethodColor = (method: PaymentMethod): string => {
     switch (method) {
       case 'Cash':
-        return '#DCFCE7'; // Green background
+        return '#1F2937';
       case 'Online':
-        return '#DBEAFE'; // Blue background
+        return '#1E40AF';
       case 'Not Done':
-        return '#FEE2E2'; // Red background
+        return '#DC2626';
       default:
-        return '#F3F4F6'; // Gray background
+        return '#374151';
     }
   };
 
   const renderBookModal = () => (
     <Modal
       visible={showBookModal}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={() => setShowBookModal(false)}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Search Book Summary</Text>
+          <Text style={styles.modalTitle}>Search Book</Text>
 
           <TextInput
             style={styles.bookInput}
-            placeholder="Enter book number (e.g., B001)"
+            placeholder="Enter book number"
             placeholderTextColor="#9CA3AF"
             value={bookNumber}
             onChangeText={setBookNumber}
@@ -576,7 +544,7 @@ const Home = () => {
 
           {availableBooks.length > 0 && (
             <View style={styles.availableBooksSection}>
-              <Text style={styles.availableBooksTitle}>Available Books:</Text>
+              <Text style={styles.availableBooksTitle}>Available Books</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.bookChips}>
                   {availableBooks.map(book => (
@@ -619,290 +587,286 @@ const Home = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#60A5FA" />
-        <Text style={styles.loadingText}>Loading Dashboard...</Text>
+        <View style={styles.loadingContent}>
+          <ActivityIndicator size="large" color="#60A5FA" />
+          <Text style={styles.loadingTitle}>Loading Dashboard</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }>
-        {/* Header */}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Compact Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Dashboard</Text>
-            <Text style={styles.subtitle}>Collection Overview</Text>
-            <Text style={styles.welcomeText}>Welcome, {user?.email}</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>Dashboard</Text>
+            <Text style={styles.headerSubtitle}>
+              Welcome back, {user?.email?.split('@')[0]}
+            </Text>
           </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.notificationIcon}>
-              <Text style={styles.bellIcon}>🔔</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerButton}>
+              <Text style={styles.headerButtonIcon}>🔔</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.logoutButton}
+              style={styles.headerButton}
               onPress={handleLogout}>
-              <Text style={styles.logoutIcon}>🚪</Text>
+              <Text style={styles.headerButtonIcon}>🚪</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Overall Summary Cards */}
-        <View style={styles.summaryContainer}>
-          <Text style={styles.sectionTitle}>Overall Summary</Text>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          }>
+          {/* Summary Section - Horizontal Layout */}
+          <View style={styles.summarySection}>
+            <View style={styles.summaryGrid}>
+              <View style={[styles.summaryCard, styles.totalCard]}>
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardAmount}>
+                    ₹{summary?.totalAmount.toLocaleString('en-IN') || '0'}
+                  </Text>
+                  <Text style={styles.cardLabel}>Total Amount</Text>
+                </View>
+                <View
+                  style={[styles.cardAccent, {backgroundColor: '#60A5FA'}]}
+                />
+              </View>
 
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryCard}>
-              <Text style={[styles.summaryAmount, {color: '#60A5FA'}]}>
-                ₹{summary?.totalAmount.toLocaleString('en-IN') || '0'}
-              </Text>
-              <Text style={styles.summaryLabel}>TOTAL AMOUNT</Text>
-            </View>
+              <View style={[styles.summaryCard, styles.paidCard]}>
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardAmount}>
+                    ₹{summary?.totalPaid.toLocaleString('en-IN') || '0'}
+                  </Text>
+                  <Text style={styles.cardLabel}>Paid Amount</Text>
+                </View>
+                <View
+                  style={[styles.cardAccent, {backgroundColor: '#22C55E'}]}
+                />
+              </View>
 
-            <View style={styles.summaryCard}>
-              <Text style={[styles.summaryAmount, {color: '#22C55E'}]}>
-                ₹{summary?.totalPaid.toLocaleString('en-IN') || '0'}
-              </Text>
-              <Text style={styles.summaryLabel}>PAID AMOUNT</Text>
-            </View>
-
-            <View style={styles.summaryCard}>
-              <Text style={[styles.summaryAmount, {color: '#F97316'}]}>
-                ₹{summary?.totalBalance.toLocaleString('en-IN') || '0'}
-              </Text>
-              <Text style={styles.summaryLabel}>BALANCE DUE</Text>
+              <View style={[styles.summaryCard, styles.balanceCard]}>
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardAmount}>
+                    ₹{summary?.totalBalance.toLocaleString('en-IN') || '0'}
+                  </Text>
+                  <Text style={styles.cardLabel}>Balance Due</Text>
+                </View>
+                <View
+                  style={[styles.cardAccent, {backgroundColor: '#F59E0B'}]}
+                />
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Book-wise Analysis Section */}
-        <View style={styles.bookAnalysisContainer}>
-          <View style={styles.bookAnalysisHeader}>
-            <Text style={styles.sectionTitle}>Book-wise Analysis</Text>
+          {/* Quick Actions */}
+          <View style={styles.quickActions}>
             <TouchableOpacity
-              style={styles.addBookButton}
+              style={styles.primaryAction}
+              onPress={handleAddDonator}>
+              <Text style={styles.actionIcon}>+</Text>
+              <Text style={styles.actionText}>Add Donator</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryAction}
+              onPress={handleViewAll}>
+              <Text style={styles.actionIcon}>📋</Text>
+              <Text style={styles.actionText}>View All</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryAction}
               onPress={() => setShowBookModal(true)}>
-              <Text style={styles.addBookIcon}>📚</Text>
-              <Text style={styles.addBookText}>Search Book</Text>
+              <Text style={styles.actionIcon}>📚</Text>
+              <Text style={styles.actionText}>Books</Text>
             </TouchableOpacity>
           </View>
 
-          {bookSummaries.length === 0 ? (
-            <View style={styles.emptyBooksState}>
-              <Text style={styles.emptyBooksIcon}>📚</Text>
-              <Text style={styles.emptyBooksTitle}>No Book Summaries</Text>
-              <Text style={styles.emptyBooksSubtitle}>
-                {availableBooks.length > 0
-                  ? 'Tap "Search Book" to view book-wise summaries'
-                  : 'No books found with donations yet'}
-              </Text>
-            </View>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.bookSummariesRow}>
-                {bookSummaries.map(book => (
-                  <TouchableOpacity
-                    key={book.bookNumber}
-                    style={styles.bookSummaryCard}
-                    onPress={() => handleViewBookDetails(book)}
-                    activeOpacity={0.7}>
-                    <View style={styles.bookHeader}>
-                      <Text style={styles.bookNumber}>
-                        Book {book.bookNumber}
-                      </Text>
-                      <View style={styles.bookStats}>
-                        <Text style={styles.bookStatsText}>
+          {/* Book Analysis Section */}
+          {bookSummaries.length > 0 && (
+            <View style={styles.booksSection}>
+              <Text style={styles.sectionTitle}>Book Analysis</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.booksContainer}>
+                  {bookSummaries.map(book => (
+                    <TouchableOpacity
+                      key={book.bookNumber}
+                      style={styles.bookCard}
+                      onPress={() => handleViewBookDetails(book)}
+                      activeOpacity={0.8}>
+                      <View style={styles.bookHeader}>
+                        <Text style={styles.bookTitle}>
+                          Book {book.bookNumber}
+                        </Text>
+                        <Text style={styles.bookProgress}>
                           {((book.totalPaid / book.totalAmount) * 100).toFixed(
                             0,
                           )}
-                          % Complete
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.bookAmounts}>
-                      <View style={styles.bookAmountRow}>
-                        <Text style={styles.bookAmountLabel}>Total:</Text>
-                        <Text
-                          style={[styles.bookAmountValue, {color: '#60A5FA'}]}>
-                          ₹{book.totalAmount.toLocaleString('en-IN')}
+                          %
                         </Text>
                       </View>
 
-                      <View style={styles.bookAmountRow}>
-                        <Text style={styles.bookAmountLabel}>Paid:</Text>
-                        <Text
-                          style={[styles.bookAmountValue, {color: '#22C55E'}]}>
-                          ₹{book.totalPaid.toLocaleString('en-IN')}
-                        </Text>
+                      <View style={styles.bookStats}>
+                        <View style={styles.bookStat}>
+                          <Text style={styles.bookStatValue}>
+                            ₹{(book.totalAmount / 1000).toFixed(0)}K
+                          </Text>
+                          <Text style={styles.bookStatLabel}>Total</Text>
+                        </View>
+                        <View style={styles.bookStat}>
+                          <Text style={styles.bookStatValue}>
+                            ₹{(book.totalPaid / 1000).toFixed(0)}K
+                          </Text>
+                          <Text style={styles.bookStatLabel}>Paid</Text>
+                        </View>
                       </View>
 
-                      <View style={styles.bookAmountRow}>
-                        <Text style={styles.bookAmountLabel}>Balance:</Text>
-                        <Text
-                          style={[styles.bookAmountValue, {color: '#F97316'}]}>
-                          ₹{book.totalBalance.toLocaleString('en-IN')}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Progress Bar */}
-                    <View style={styles.progressContainer}>
-                      <View style={styles.progressBackground}>
+                      <View style={styles.bookProgressBar}>
                         <View
                           style={[
-                            styles.progressFill,
+                            styles.bookProgressFill,
                             {
                               width: `${
                                 (book.totalPaid / book.totalAmount) * 100
                               }%`,
-                              backgroundColor:
-                                book.totalBalance === 0 ? '#22C55E' : '#60A5FA',
                             },
                           ]}
                         />
                       </View>
+
+                      <Text style={styles.tapHint}>Tap for details</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Recent Donations */}
+          <View style={styles.recentSection}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+
+            {recentDonations.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>📭</Text>
+                <Text style={styles.emptyTitle}>No Recent Activity</Text>
+                <Text style={styles.emptySubtitle}>
+                  Donations will appear here
+                </Text>
+              </View>
+            ) : (
+              recentDonations.map(donator => {
+                const paymentMethods = getUniquePaymentMethods(donator);
+                const users = getUniqueUsers(donator);
+
+                return (
+                  <View key={donator.id} style={styles.recentItem}>
+                    <View style={styles.recentHeader}>
+                      <Text style={styles.recentName}>{donator.name}</Text>
+                      <View
+                        style={[
+                          styles.recentStatus,
+                          {
+                            backgroundColor: getStatusBadgeColor(
+                              getDonationStatus(donator),
+                            ),
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.recentStatusText,
+                            {
+                              color: getStatusTextColor(
+                                getDonationStatus(donator),
+                              ),
+                            },
+                          ]}>
+                          {getDonationStatus(donator)}
+                        </Text>
+                      </View>
                     </View>
 
-                    {/* Tap to view indicator */}
-                    <Text style={styles.tapToViewText}>
-                      Tap to view all donations
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          )}
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleAddDonator}>
-            <View style={styles.actionIcon}>
-              <Text style={styles.plusIcon}>+</Text>
-            </View>
-            <Text style={styles.actionText}>Add Donator</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={handleViewAll}>
-            <View style={styles.actionIcon}>
-              <Text style={styles.clipboardIcon}>📋</Text>
-            </View>
-            <Text style={styles.actionText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recent Donations */}
-        <View style={styles.recentContainer}>
-          <Text style={styles.sectionTitle}>Recent Donations</Text>
-
-          {recentDonations.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No donations found</Text>
-            </View>
-          ) : (
-            recentDonations.map(donator => {
-              const paymentMethods = getUniquePaymentMethods(donator);
-              const users = getUniqueUsers(donator);
-
-              return (
-                <TouchableOpacity key={donator.id} style={styles.donationCard}>
-                  <View style={styles.donationInfo}>
-                    <Text style={styles.donatorName}>{donator.name}</Text>
-
-                    {/* Amount Details */}
-                    <View style={styles.amountContainer}>
-                      <View style={styles.amountRow}>
-                        <Text style={styles.amountLabel}>Total:</Text>
-                        <Text style={styles.amountValue}>
+                    <View style={styles.recentAmounts}>
+                      <View style={styles.recentAmount}>
+                        <Text style={styles.recentAmountLabel}>Total</Text>
+                        <Text style={styles.recentAmountValue}>
                           ₹{getTotalAmount(donator).toLocaleString('en-IN')}
                         </Text>
                       </View>
-
-                      <View style={styles.amountRow}>
-                        <Text style={styles.amountLabel}>Paid:</Text>
-                        <Text style={[styles.amountValue, {color: '#22C55E'}]}>
+                      <View style={styles.recentAmount}>
+                        <Text style={styles.recentAmountLabel}>Paid</Text>
+                        <Text
+                          style={[
+                            styles.recentAmountValue,
+                            {color: '#22C55E'},
+                          ]}>
                           ₹{getTotalPaidAmount(donator).toLocaleString('en-IN')}
                         </Text>
                       </View>
-
-                      <View style={styles.amountRow}>
-                        <Text style={styles.amountLabel}>Balance:</Text>
-                        <Text style={[styles.amountValue, {color: '#F97316'}]}>
+                      <View style={styles.recentAmount}>
+                        <Text style={styles.recentAmountLabel}>Balance</Text>
+                        <Text
+                          style={[
+                            styles.recentAmountValue,
+                            {color: '#F59E0B'},
+                          ]}>
                           ₹{getTotalBalance(donator).toLocaleString('en-IN')}
                         </Text>
                       </View>
                     </View>
 
-                    {/* Phone Number */}
-                    {donator.phone && (
-                      <Text style={styles.donatorPhone}>
-                        📞 {donator.phone}
-                      </Text>
-                    )}
+                    <View style={styles.recentMeta}>
+                      {donator.phone && (
+                        <Text style={styles.recentMetaText}>
+                          📞 {donator.phone}
+                        </Text>
+                      )}
 
-                    {/* Book Numbers */}
-                    {donator.donations.some(d => d.bookNumber) && (
-                      <Text style={styles.donatorBooks}>
-                        📚 Recipt Book:{' '}
-                        {Array.from(
-                          new Set(
-                            donator.donations
-                              .map(d => d.bookNumber)
-                              .filter(Boolean),
-                          ),
-                        ).join(', ')}
-                      </Text>
-                    )}
+                      {donator.donations.some(d => d.bookNumber) && (
+                        <Text style={styles.recentMetaText}>
+                          📚{' '}
+                          {Array.from(
+                            new Set(
+                              donator.donations
+                                .map(d => d.bookNumber)
+                                .filter(Boolean),
+                            ),
+                          ).join(', ')}
+                        </Text>
+                      )}
 
-                    {/* Payment Methods */}
-                    {paymentMethods.length > 0 && (
-                      <Text style={styles.donatorPaymentMethods}>
-                        💳 Payment: {paymentMethods.join(', ')}
-                      </Text>
-                    )}
+                      {paymentMethods.length > 0 && (
+                        <Text style={styles.recentMetaText}>
+                          💳 {paymentMethods.join(', ')}
+                        </Text>
+                      )}
 
-                    {/* Added By */}
-                    {users.length > 0 && (
-                      <Text style={styles.donatorAddedBy}>
-                        👤 Added by: {users.join(', ')}
-                      </Text>
-                    )}
+                      {users.length > 0 && (
+                        <Text style={styles.recentMetaText}>
+                          👤 {users.join(', ')}
+                        </Text>
+                      )}
+                    </View>
                   </View>
+                );
+              })
+            )}
+          </View>
 
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor: getStatusBadgeColor(
-                          getDonationStatus(donator),
-                        ),
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.statusText,
-                        {color: getStatusTextColor(getDonationStatus(donator))},
-                      ]}>
-                      {getDonationStatus(donator)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })
-          )}
-        </View>
-      </ScrollView>
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      </SafeAreaView>
 
       {renderBookModal()}
       {renderBookDetailsModal()}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -910,504 +874,389 @@ const Home = () => {
 const getStatusBadgeColor = (status: string) => {
   switch (status) {
     case 'PAID':
-      return '#DCFCE7';
+      return '#065F46';
     case 'PARTIAL':
-      return '#FEF3C7';
+      return '#92400E';
     case 'PENDING':
-      return '#FEE2E2';
+      return '#991B1B';
     default:
-      return '#F3F4F6';
+      return '#374151';
   }
 };
 
 const getStatusTextColor = (status: string) => {
   switch (status) {
     case 'PAID':
-      return '#166534';
+      return '#D1FAE5';
     case 'PARTIAL':
-      return '#92400E';
+      return '#FDE68A';
     case 'PENDING':
-      return '#DC2626';
+      return '#FEE2E2';
     default:
-      return '#6B7280';
+      return '#D1D5DB';
   }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0F172A',
+  },
+  safeArea: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#6B7280',
+  loadingContent: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  loadingTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#E2E8F0',
   },
   scrollView: {
     flex: 1,
   },
+
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 32,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(100, 116, 139, 0.1)',
   },
-  title: {
-    fontSize: 32,
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
     fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
+    color: '#F1F5F9',
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#6B7280',
-  },
-  welcomeText: {
+  headerSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
+    color: '#94A3B8',
+    marginTop: 2,
   },
-  headerActions: {
+  headerRight: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FEF3C7',
+  headerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
-  logoutButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FEE2E2',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoutIcon: {
+  headerButtonIcon: {
     fontSize: 16,
   },
-  bellIcon: {
-    fontSize: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 16,
-  },
-  summaryContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
+
+  // Summary Section
+  summarySection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   summaryGrid: {
+    flexDirection: 'row',
     gap: 12,
   },
   summaryCard: {
-    backgroundColor: '#FFFFFF',
+    flex: 1,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
     borderRadius: 16,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+    overflow: 'hidden',
+    position: 'relative',
   },
-  summaryAmount: {
-    fontSize: 28,
+  cardContent: {
+    padding: 16,
+    paddingRight: 20,
+  },
+  cardAmount: {
+    fontSize: 16,
     fontWeight: '700',
-    marginBottom: 8,
+    color: '#F1F5F9',
+    marginBottom: 4,
   },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    fontWeight: '600',
-    letterSpacing: 1,
+  cardLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cardAccent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 4,
   },
 
-  // Book Analysis Styles
-  bookAnalysisContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  bookAnalysisHeader: {
+  // Quick Actions
+  quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 12,
   },
-  addBookButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#60A5FA',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-  },
-  addBookIcon: {
-    fontSize: 14,
-  },
-  addBookText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  emptyBooksState: {
-    backgroundColor: '#FFFFFF',
+  primaryAction: {
+    flex: 2,
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
     borderRadius: 16,
-    paddingVertical: 40,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
   },
-  emptyBooksIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  secondaryAction: {
+    flex: 1,
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
-  emptyBooksTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
+  actionIcon: {
+    fontSize: 20,
     marginBottom: 8,
   },
-  emptyBooksSubtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
+  actionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#F1F5F9',
     textAlign: 'center',
-    paddingHorizontal: 32,
   },
-  bookSummariesRow: {
+
+  // Books Section
+  booksSection: {
+    paddingTop: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  booksContainer: {
     flexDirection: 'row',
+    paddingLeft: 20,
     gap: 16,
-    paddingRight: 24,
   },
-  bookSummaryCard: {
-    backgroundColor: '#FFFFFF',
+  bookCard: {
+    width: 200,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
     borderRadius: 16,
-    padding: 20,
-    width: 280,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+    marginRight: 4,
   },
   bookHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  bookNumber: {
-    fontSize: 18,
+  bookTitle: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#F1F5F9',
+  },
+  bookProgress: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#60A5FA',
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.2)',
   },
   bookStats: {
-    backgroundColor: '#EBF4FF',
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 12,
+  },
+  bookStat: {
+    flex: 1,
+  },
+  bookStatValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
+  },
+  bookStatLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  bookProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(100, 116, 139, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  bookProgressFill: {
+    height: '100%',
+    backgroundColor: '#60A5FA',
+    borderRadius: 2,
+  },
+  tapHint: {
+    fontSize: 10,
+    color: '#64748B',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+
+  // Recent Section
+  recentSection: {
+    paddingTop: 32,
+    paddingHorizontal: 20,
+  },
+  emptyState: {
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    borderRadius: 16,
+    paddingVertical: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.1)',
+    borderStyle: 'dashed',
+  },
+  emptyIcon: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+  },
+  recentItem: {
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  recentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  recentName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#F1F5F9',
+    flex: 1,
+    marginRight: 12,
+  },
+  recentStatus: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  bookStatsText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1E40AF',
-  },
-  bookAmounts: {
-    marginBottom: 16,
-  },
-  bookAmountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  bookAmountLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  bookAmountValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  progressContainer: {
-    marginTop: 8,
-  },
-  progressBackground: {
-    height: 6,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  tapToViewText: {
-    fontSize: 11,
-    color: '#60A5FA',
-    textAlign: 'center',
-    marginTop: 8,
-    fontStyle: 'italic',
-    fontWeight: '500',
-  },
-
-  // Book Details Modal Styles
-  bookDetailsContainer: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  bookDetailsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  bookDetailsClose: {
-    fontSize: 24,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  bookDetailsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  bookDetailsPlaceholder: {
-    width: 24,
-  },
-  bookDetailsSummary: {
-    backgroundColor: '#FFFFFF',
-    margin: 16,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  bookDetailsSummaryTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 16,
-  },
-  bookDetailsSummaryGrid: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
-  },
-  bookDetailsSummaryItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  bookDetailsSummaryAmount: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  bookDetailsSummaryLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  bookProgressContainer: {
-    marginTop: 12,
-  },
-  bookProgressText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  bookProgressBar: {
-    height: 8,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  bookProgressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  bookDetailsLoading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
-  bookDetailsLoadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  donationsListContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  donationsListTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 16,
-    marginHorizontal: 8,
-  },
-  donationsList: {
-    flex: 1,
-  },
-  bookDonationCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  bookDonationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  bookDonatorName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    flex: 1,
-    marginRight: 12,
-  },
-  bookDonationStatusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  bookDonationStatusText: {
+  recentStatusText: {
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
-  bookDonationAmounts: {
-    marginBottom: 16,
-  },
-  bookDonationAmountRow: {
+  recentAmounts: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    gap: 16,
+    marginBottom: 12,
   },
-  bookDonationAmountLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+  recentAmount: {
+    flex: 1,
   },
-  bookDonationAmountValue: {
+  recentAmountLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 2,
+  },
+  recentAmountValue: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#F1F5F9',
   },
-  bookDonationInfo: {
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingTop: 16,
-    gap: 8,
+  recentMeta: {
+    gap: 4,
   },
-  bookDonationInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bookDonationInfoLabel: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '500',
-  },
-  bookDonationInfoValue: {
-    fontSize: 13,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  paymentMethodBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  paymentMethodText: {
+  recentMetaText: {
     fontSize: 12,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  emptyDonationsList: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 48,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  emptyDonationsText: {
-    fontSize: 16,
-    color: '#9CA3AF',
+    color: '#64748B',
   },
 
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+    borderRadius: 20,
     padding: 24,
     width: '100%',
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#F1F5F9',
     marginBottom: 20,
     textAlign: 'center',
   },
   bookInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(51, 65, 85, 0.8)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#374151',
+    color: '#F1F5F9',
     marginBottom: 20,
   },
   availableBooksSection: {
@@ -1416,7 +1265,7 @@ const styles = StyleSheet.create({
   availableBooksTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#94A3B8',
     marginBottom: 12,
   },
   bookChips: {
@@ -1424,17 +1273,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   bookChip: {
-    backgroundColor: '#EBF4FF',
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(96, 165, 250, 0.3)',
   },
   bookChipText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#1E40AF',
+    color: '#60A5FA',
   },
   modalActions: {
     flexDirection: 'row',
@@ -1444,160 +1293,253 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(100, 116, 139, 0.3)',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
   },
   modalCancelText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#94A3B8',
   },
   modalSearchButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#60A5FA',
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
   },
   modalButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: 'rgba(100, 116, 139, 0.5)',
   },
   modalSearchText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#F1F5F9',
   },
 
-  actionContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    marginBottom: 32,
-    gap: 16,
-  },
-  actionButton: {
+  // Book Details Modal
+  modalBackground: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    backgroundColor: '#0F172A',
   },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F3F4F6',
+  bookDetailsContainer: {
+    flex: 1,
+  },
+  bookDetailsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
-  plusIcon: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  clipboardIcon: {
-    fontSize: 20,
-  },
-  actionText: {
+  closeButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
-  recentContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-  emptyState: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 48,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  donationCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  donationInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  donatorName: {
+  bookDetailsTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: '#F1F5F9',
   },
-  amountContainer: {
-    marginBottom: 8,
+  bookDetailsPlaceholder: {
+    width: 32,
   },
-  amountRow: {
+  bookDetailsSummary: {
+    margin: 20,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  summaryStatsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 20,
+  },
+  statItem: {
+    flex: 1,
     alignItems: 'center',
+    position: 'relative',
+    paddingBottom: 8,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
     marginBottom: 4,
   },
-  amountLabel: {
-    fontSize: 14,
-    color: '#6B7280',
+  statLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
     fontWeight: '500',
-    minWidth: 60,
+  },
+  statIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '25%',
+    right: '25%',
+    height: 3,
+    borderRadius: 1.5,
+  },
+  progressSection: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(100, 116, 139, 0.2)',
+    paddingTop: 16,
+  },
+  progressTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  progressBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  progressBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: 'rgba(100, 116, 139, 0.3)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#60A5FA',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#60A5FA',
+    minWidth: 40,
+  },
+  donationsList: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  donationsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    marginBottom: 16,
+  },
+  loadingSection: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  donationItem: {
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  donationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  donorName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#F1F5F9',
+    flex: 1,
+    marginRight: 12,
+  },
+  statusChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  donationAmounts: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 12,
+  },
+  amountItem: {
+    flex: 1,
+  },
+  amountLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 4,
   },
   amountValue: {
     fontSize: 14,
-    color: '#1F2937',
     fontWeight: '600',
   },
-  donatorPhone: {
+  donationMeta: {
+    flexDirection: 'row',
+    gap: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(100, 116, 139, 0.2)',
+    paddingTop: 12,
+  },
+  metaItem: {
+    flex: 1,
+  },
+  metaLabel: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  paymentChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  paymentChipText: {
+    fontSize: 11,
+    color: '#F1F5F9',
+    fontWeight: '500',
+  },
+  metaValue: {
     fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
+    color: '#E2E8F0',
+    fontWeight: '500',
   },
-  donatorBooks: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
+
+  bottomSpacing: {
+    height: 32,
   },
-  donatorPaymentMethods: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-  donatorAddedBy: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    minWidth: 70,
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
+  totalCard: {},
+  paidCard: {},
+  balanceCard: {},
 });
 
 export default Home;

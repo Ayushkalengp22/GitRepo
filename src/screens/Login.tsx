@@ -8,14 +8,18 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import {authAPI, ApiError} from '../Api/auth';
 import {useAuth} from '../context/AuthContext';
+
+const {width, height} = Dimensions.get('window');
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {login} = useAuth();
 
@@ -54,179 +58,375 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header Section */}
-        <View style={styles.headerSection}>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Background Decorations */}
+        <View style={styles.backgroundDecoration}>
+          <View style={styles.circle1} />
+          <View style={styles.circle2} />
+          <View style={styles.circle3} />
+        </View>
 
-          {/* Icon Circle with Chart */}
-          <View style={styles.iconContainer}>
-            <View style={styles.chartIcon}>
-              <View style={styles.chartBar1} />
-              <View style={styles.chartBar2} />
-              <View style={styles.chartBar3} />
+        {/* Content Container */}
+        <View style={styles.contentContainer}>
+          {/* Header Section */}
+          <View style={styles.headerSection}>
+            <View style={styles.brandContainer}>
+              <View style={styles.logoContainer}>
+                <View style={styles.chartIcon}>
+                  <View style={styles.chartBar1} />
+                  <View style={styles.chartBar2} />
+                  <View style={styles.chartBar3} />
+                  <View style={styles.chartBar4} />
+                </View>
+              </View>
+              <Text style={styles.brandName}>DonationManager</Text>
+            </View>
+
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeText}>Welcome Back</Text>
+              <Text style={styles.subtitleText}>
+                Sign in to manage your donations
+              </Text>
             </View>
           </View>
 
-          <Text style={styles.subtitleText}>Sign in to manage donations</Text>
-        </View>
+          {/* Form Section */}
+          <View style={styles.formContainer}>
+            <View style={styles.formCard}>
+              {/* Email Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email or Phone</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputIcon}>📧</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email or phone"
+                    placeholderTextColor="#64748B"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!isLoading}
+                  />
+                </View>
+              </View>
 
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email or Phone</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter your email or phone"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
+              {/* Password Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#64748B"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}>
+                    <Text style={styles.eyeIcon}>
+                      {showPassword ? '🙈' : '👁️'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Sign In Button */}
+              <TouchableOpacity
+                style={[
+                  styles.signInButton,
+                  isLoading && styles.signInButtonDisabled,
+                ]}
+                onPress={handleLogin}
+                disabled={isLoading}
+                activeOpacity={0.8}>
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#F1F5F9" />
+                    <Text style={styles.loadingText}>Signing in...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Text style={styles.signInButtonText}>Sign In</Text>
+                    <Text style={styles.buttonIcon}>→</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* Forgot Password */}
+              <TouchableOpacity style={styles.forgotPasswordButton}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter your password"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!isLoading}
-            />
+          {/* Footer */}
+          <View style={styles.footerSection}>
+            <Text style={styles.footerText}>
+              Secure login with end-to-end encryption
+            </Text>
           </View>
-
-          <TouchableOpacity
-            style={[
-              styles.signInButton,
-              isLoading && styles.signInButtonDisabled,
-            ]}
-            onPress={handleLogin}
-            disabled={isLoading}>
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.signInButtonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.forgotPasswordButton}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
   },
-  content: {
+  safeArea: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
+  },
+  backgroundDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  circle1: {
+    position: 'absolute',
+    top: height * 0.1,
+    right: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+    opacity: 0.5,
+  },
+  circle2: {
+    position: 'absolute',
+    top: height * 0.3,
+    left: -80,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    opacity: 0.3,
+  },
+  circle3: {
+    position: 'absolute',
+    bottom: height * 0.2,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    opacity: 0.4,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'space-between',
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: 60,
+    paddingTop: 60,
   },
-  welcomeText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#374151',
+  brandContainer: {
+    alignItems: 'center',
     marginBottom: 40,
-    textAlign: 'center',
   },
-  iconContainer: {
+  logoContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#60A5FA',
+    backgroundColor: 'rgba(96, 165, 250, 0.15)',
+    borderWidth: 2,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 16,
   },
   chartIcon: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 3,
+    gap: 4,
   },
   chartBar1: {
-    width: 8,
-    height: 20,
+    width: 6,
+    height: 16,
     backgroundColor: '#22C55E',
-    borderRadius: 1,
+    borderRadius: 3,
   },
   chartBar2: {
-    width: 8,
-    height: 15,
-    backgroundColor: '#EF4444',
-    borderRadius: 1,
+    width: 6,
+    height: 24,
+    backgroundColor: '#60A5FA',
+    borderRadius: 3,
   },
   chartBar3: {
-    width: 8,
-    height: 25,
-    backgroundColor: '#3B82F6',
-    borderRadius: 1,
+    width: 6,
+    height: 20,
+    backgroundColor: '#F59E0B',
+    borderRadius: 3,
   },
-  subtitleText: {
-    fontSize: 18,
-    color: '#6B7280',
+  chartBar4: {
+    width: 6,
+    height: 28,
+    backgroundColor: '#8B5CF6',
+    borderRadius: 3,
+  },
+  brandName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#60A5FA',
+    letterSpacing: 0.5,
+  },
+  welcomeContainer: {
+    alignItems: 'center',
+    paddingBottom: 32,
+  },
+  welcomeText: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#F1F5F9',
+    marginBottom: 8,
     textAlign: 'center',
   },
-  formSection: {
+  subtitleText: {
+    fontSize: 16,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  formContainer: {
     flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  formCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 24,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 8,
   },
   inputGroup: {
     marginBottom: 24,
   },
-  label: {
-    fontSize: 16,
+  inputLabel: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#E2E8F0',
     marginBottom: 8,
+    marginLeft: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(51, 65, 85, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  inputIcon: {
+    fontSize: 18,
+    marginRight: 12,
   },
   textInput: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: '#374151',
+    color: '#F1F5F9',
+    fontWeight: '500',
+  },
+  eyeButton: {
+    padding: 8,
+  },
+  eyeIcon: {
+    fontSize: 16,
   },
   signInButton: {
-    backgroundColor: '#60A5FA',
-    borderRadius: 12,
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
+    borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24,
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+    shadowColor: '#60A5FA',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   signInButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: 'rgba(100, 116, 139, 0.5)',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    shadowOpacity: 0,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   signInButtonText: {
-    color: '#FFFFFF',
+    color: '#F1F5F9',
     fontSize: 18,
+    fontWeight: '700',
+  },
+  buttonIcon: {
+    fontSize: 18,
+    color: '#F1F5F9',
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: '#F1F5F9',
+    fontSize: 16,
     fontWeight: '600',
   },
   forgotPasswordButton: {
     alignItems: 'center',
+    paddingVertical: 8,
   },
   forgotPasswordText: {
     color: '#60A5FA',
     fontSize: 16,
     fontWeight: '500',
+  },
+  footerSection: {
+    alignItems: 'center',
+    paddingBottom: 60,
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  securityIcons: {
+    flexDirection: 'row',
+    gap: 8,
+    // paddingTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  securityIcon: {
+    fontSize: 16,
+    opacity: 0.7,
   },
 });
 
