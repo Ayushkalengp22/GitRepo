@@ -195,6 +195,11 @@ const ViewAll = () => {
           {item.address && (
             <Text style={styles.infoText}>📍 {item.address}</Text>
           )}
+          {item.donations.length > 0 && item.donations[0].user && (
+            <Text style={styles.infoText}>
+              👤 Added by: {item.donations[0].user.name}
+            </Text>
+          )}
         </View>
 
         <View style={styles.amountContainer}>

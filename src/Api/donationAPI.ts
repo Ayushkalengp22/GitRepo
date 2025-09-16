@@ -37,7 +37,13 @@ export interface Donation {
   bookNumber?: string;
   createdAt: string;
   updatedAt: string;
+  user?: User;
   donator?: Donator;
+}
+export interface User {
+  id: number;
+  // email: string;
+  name?: string;
 }
 
 export interface Donator {

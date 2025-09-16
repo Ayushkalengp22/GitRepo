@@ -36,7 +36,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = 'http://localhost:4000';
+import {API_BASE_URL} from '../../src/config';
 
 export const authAPI = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
