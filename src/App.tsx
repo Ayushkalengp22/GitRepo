@@ -3,7 +3,6 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {ActivityIndicator, View, StyleSheet} from 'react-native';
 import {AuthProvider, useAuth} from './context/AuthContext';
-import Details from './screens/Details';
 import Home from '../src/screens/Home';
 import Login from './screens/Login';
 import AddDonator from './screens/AddDonator';
@@ -50,11 +49,6 @@ const AppNavigator = () => {
             <Stack.Screen
               name="Home"
               component={Home}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Details"
-              component={Details}
               options={{headerShown: false}}
             />
             <Stack.Screen

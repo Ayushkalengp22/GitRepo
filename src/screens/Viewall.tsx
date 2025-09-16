@@ -338,27 +338,18 @@ const ViewAll = () => {
   const handleEditDonator = (donatorId: number) => {
     navigation.navigate('EditDonator', {donatorId});
   };
-  // Add this function to your ViewAll component
+
   const handleDownloadPDF = async () => {
-    // Show confirmation dialog first
     donationUtils.showPDFDownloadDialog(
       async () => {
         try {
           setIsGeneratingPDF(true);
-
-          // Download PDF from API
           const pdfResponse = await donationAPI.downloadDonorsPDF();
-
-          // Generate filename with timestamp
           const filename = donationUtils.generatePDFFilename();
-
-          // Save to device (you'll need react-native-fs for actual file saving)
           const base64 = await donationUtils.savePDFToDevice(
             pdfResponse.blob,
             filename,
           );
-
-          // Show success dialog
           donationUtils.showPDFSuccessDialog(filename);
         } catch (error) {
           if (error instanceof DonationApiError) {
@@ -371,7 +362,6 @@ const ViewAll = () => {
         }
       },
       () => {
-        // User cancelled - do nothing
         console.log('PDF download cancelled');
       },
     );
@@ -380,250 +370,249 @@ const ViewAll = () => {
   const renderFilterModal = () => (
     <Modal
       visible={showFilterModal}
-      animationType="slide"
+      animationType="fade"
       presentationStyle="pageSheet">
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-            <Text style={styles.modalCancel}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Filters & Sort</Text>
-          <TouchableOpacity onPress={clearAllFilters}>
-            <Text style={styles.modalClear}>Clear All</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.modalBackground}>
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.modalHeaderButton}
+              onPress={() => setShowFilterModal(false)}>
+              <Text style={styles.modalCancel}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Filters & Sort</Text>
+            <TouchableOpacity
+              style={styles.modalHeaderButton}
+              onPress={clearAllFilters}>
+              <Text style={styles.modalClear}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
 
-        <ScrollView style={styles.modalContent}>
-          {/* Status Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>Payment Status</Text>
-            <View style={styles.filterOptions}>
-              {(['ALL', 'PAID', 'PARTIAL', 'PENDING'] as FilterType[]).map(
-                status => (
+          <ScrollView
+            style={styles.modalContent}
+            showsVerticalScrollIndicator={false}>
+            {/* Status Filter */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Payment Status</Text>
+              <View style={styles.filterOptionsGrid}>
+                {(['ALL', 'PAID', 'PARTIAL', 'PENDING'] as FilterType[]).map(
+                  status => (
+                    <TouchableOpacity
+                      key={status}
+                      style={[
+                        styles.filterOption,
+                        filters.status === status && styles.filterOptionActive,
+                      ]}
+                      onPress={() => setFilters(prev => ({...prev, status}))}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          filters.status === status &&
+                            styles.filterOptionTextActive,
+                        ]}>
+                        {status}
+                      </Text>
+                    </TouchableOpacity>
+                  ),
+                )}
+              </View>
+            </View>
+
+            {/* Amount Range Filter */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Amount Range</Text>
+              <View style={styles.filterOptionsList}>
+                {[
+                  {key: 'ALL', label: 'All Amounts', icon: '💰'},
+                  {key: 'SMALL', label: 'Under ₹5,000', icon: '🔸'},
+                  {key: 'MEDIUM', label: '₹5,000 - ₹25,000', icon: '🔹'},
+                  {key: 'LARGE', label: 'Above ₹25,000', icon: '🔷'},
+                ].map(option => (
                   <TouchableOpacity
-                    key={status}
+                    key={option.key}
                     style={[
-                      styles.filterOption,
-                      filters.status === status && styles.filterOptionActive,
+                      styles.filterOptionRow,
+                      filters.amountRange === option.key &&
+                        styles.filterOptionRowActive,
                     ]}
-                    onPress={() => setFilters(prev => ({...prev, status}))}>
+                    onPress={() =>
+                      setFilters(prev => ({
+                        ...prev,
+                        amountRange: option.key as AmountRangeFilter,
+                      }))
+                    }>
+                    <Text style={styles.filterOptionIcon}>{option.icon}</Text>
                     <Text
                       style={[
-                        styles.filterOptionText,
-                        filters.status === status &&
-                          styles.filterOptionTextActive,
+                        styles.filterOptionRowText,
+                        filters.amountRange === option.key &&
+                          styles.filterOptionRowTextActive,
                       ]}>
-                      {status}
+                      {option.label}
                     </Text>
                   </TouchableOpacity>
-                ),
-              )}
+                ))}
+              </View>
             </View>
-          </View>
 
-          {/* Amount Range Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>Total Amount Range</Text>
-            <View style={styles.filterOptions}>
-              {(
-                [
-                  {key: 'ALL', label: 'All Amounts'},
-                  {key: 'SMALL', label: 'Under ₹5,000'},
-                  {key: 'MEDIUM', label: '₹5,000 - ₹25,000'},
-                  {key: 'LARGE', label: 'Above ₹25,000'},
-                ] as Array<{key: AmountRangeFilter; label: string}>
-              ).map(option => (
-                <TouchableOpacity
-                  key={option.key}
-                  style={[
-                    styles.filterOption,
-                    filters.amountRange === option.key &&
-                      styles.filterOptionActive,
-                  ]}
-                  onPress={() =>
-                    setFilters(prev => ({...prev, amountRange: option.key}))
-                  }>
-                  <Text
+            {/* Balance Range Filter */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Outstanding Balance</Text>
+              <View style={styles.filterOptionsList}>
+                {[
+                  {key: 'ALL', label: 'All Balances', icon: '⚖️'},
+                  {key: 'ZERO', label: 'Fully Paid (₹0)', icon: '✅'},
+                  {key: 'LOW', label: 'Low (₹1 - ₹1,000)', icon: '🟢'},
+                  {
+                    key: 'MEDIUM',
+                    label: 'Medium (₹1,001 - ₹10,000)',
+                    icon: '🟡',
+                  },
+                  {key: 'HIGH', label: 'High (₹10,000+)', icon: '🔴'},
+                ].map(option => (
+                  <TouchableOpacity
+                    key={option.key}
                     style={[
-                      styles.filterOptionText,
-                      filters.amountRange === option.key &&
-                        styles.filterOptionTextActive,
-                    ]}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Balance Range Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>Outstanding Balance</Text>
-            <View style={styles.filterOptions}>
-              {(
-                [
-                  {key: 'ALL', label: 'All Balances'},
-                  {key: 'ZERO', label: 'Fully Paid (₹0)'},
-                  {key: 'LOW', label: 'Low (₹1 - ₹1,000)'},
-                  {key: 'MEDIUM', label: 'Medium (₹1,001 - ₹10,000)'},
-                  {key: 'HIGH', label: 'High (₹10,000+)'},
-                ] as Array<{key: BalanceRangeFilter; label: string}>
-              ).map(option => (
-                <TouchableOpacity
-                  key={option.key}
-                  style={[
-                    styles.filterOption,
-                    filters.balanceRange === option.key &&
-                      styles.filterOptionActive,
-                  ]}
-                  onPress={() =>
-                    setFilters(prev => ({...prev, balanceRange: option.key}))
-                  }>
-                  <Text
-                    style={[
-                      styles.filterOptionText,
+                      styles.filterOptionRow,
                       filters.balanceRange === option.key &&
-                        styles.filterOptionTextActive,
-                    ]}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                        styles.filterOptionRowActive,
+                    ]}
+                    onPress={() =>
+                      setFilters(prev => ({
+                        ...prev,
+                        balanceRange: option.key as BalanceRangeFilter,
+                      }))
+                    }>
+                    <Text style={styles.filterOptionIcon}>{option.icon}</Text>
+                    <Text
+                      style={[
+                        styles.filterOptionRowText,
+                        filters.balanceRange === option.key &&
+                          styles.filterOptionRowTextActive,
+                      ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
 
-          {/* Added By Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>Added By</Text>
-            <View style={styles.filterOptions}>
-              <TouchableOpacity
-                style={[
-                  styles.filterOption,
-                  filters.addedBy === 'ALL' && styles.filterOptionActive,
-                ]}
-                onPress={() => setFilters(prev => ({...prev, addedBy: 'ALL'}))}>
-                <Text
-                  style={[
-                    styles.filterOptionText,
-                    filters.addedBy === 'ALL' && styles.filterOptionTextActive,
-                  ]}>
-                  All Users
-                </Text>
-              </TouchableOpacity>
-              {availableUsers.map(userName => (
-                <TouchableOpacity
-                  key={userName}
-                  style={[
-                    styles.filterOption,
-                    filters.addedBy === userName && styles.filterOptionActive,
-                  ]}
-                  onPress={() =>
-                    setFilters(prev => ({...prev, addedBy: userName}))
-                  }>
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      filters.addedBy === userName &&
-                        styles.filterOptionTextActive,
-                    ]}>
-                    {userName}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Priority Filter */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>Priority Level</Text>
-            <View style={styles.filterOptions}>
-              {(
-                [
-                  {key: 'ALL', label: 'All Priority'},
+            {/* Priority Filter */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Priority Level</Text>
+              <View style={styles.filterOptionsList}>
+                {[
+                  {key: 'ALL', label: 'All Priority', icon: '📋'},
                   {
                     key: 'HIGH_PRIORITY',
                     label: 'High Priority (₹10,000+ balance)',
+                    icon: '🔥',
                   },
                   {
                     key: 'LOW_PRIORITY',
                     label: 'Low Priority (≤₹1,000 balance)',
+                    icon: '❄️',
                   },
-                ] as Array<{
-                  key: 'ALL' | 'HIGH_PRIORITY' | 'LOW_PRIORITY';
-                  label: string;
-                }>
-              ).map(option => (
-                <TouchableOpacity
-                  key={option.key}
-                  style={[
-                    styles.filterOption,
-                    filters.priority === option.key &&
-                      styles.filterOptionActive,
-                  ]}
-                  onPress={() =>
-                    setFilters(prev => ({...prev, priority: option.key}))
-                  }>
-                  <Text
+                ].map(option => (
+                  <TouchableOpacity
+                    key={option.key}
                     style={[
-                      styles.filterOptionText,
+                      styles.filterOptionRow,
                       filters.priority === option.key &&
-                        styles.filterOptionTextActive,
-                    ]}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                        styles.filterOptionRowActive,
+                    ]}
+                    onPress={() =>
+                      setFilters(prev => ({
+                        ...prev,
+                        priority: option.key as
+                          | 'ALL'
+                          | 'HIGH_PRIORITY'
+                          | 'LOW_PRIORITY',
+                      }))
+                    }>
+                    <Text style={styles.filterOptionIcon}>{option.icon}</Text>
+                    <Text
+                      style={[
+                        styles.filterOptionRowText,
+                        filters.priority === option.key &&
+                          styles.filterOptionRowTextActive,
+                      ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
 
-          {/* Sort Options */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>Sort By</Text>
-            <View style={styles.filterOptions}>
-              {(
-                [
-                  {key: 'NAME_ASC', label: 'Name (A-Z)'},
-                  {key: 'NAME_DESC', label: 'Name (Z-A)'},
-                  {key: 'AMOUNT_DESC', label: 'Highest Amount First'},
-                  {key: 'AMOUNT_ASC', label: 'Lowest Amount First'},
-                  {key: 'BALANCE_DESC', label: 'Highest Balance First'},
-                  {key: 'BALANCE_ASC', label: 'Lowest Balance First'},
-                  {key: 'DONATIONS_COUNT', label: 'Most Donations First'},
-                ] as Array<{key: SortOption; label: string}>
-              ).map(option => (
-                <TouchableOpacity
-                  key={option.key}
-                  style={[
-                    styles.filterOption,
-                    filters.sortBy === option.key && styles.filterOptionActive,
-                  ]}
-                  onPress={() =>
-                    setFilters(prev => ({...prev, sortBy: option.key}))
-                  }>
-                  <Text
+            {/* Sort Options */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Sort By</Text>
+              <View style={styles.filterOptionsList}>
+                {[
+                  {key: 'NAME_ASC', label: 'Name (A-Z)', icon: '🔤'},
+                  {key: 'NAME_DESC', label: 'Name (Z-A)', icon: '🔣'},
+                  {
+                    key: 'AMOUNT_DESC',
+                    label: 'Highest Amount First',
+                    icon: '⬆️',
+                  },
+                  {key: 'AMOUNT_ASC', label: 'Lowest Amount First', icon: '⬇️'},
+                  {
+                    key: 'BALANCE_DESC',
+                    label: 'Highest Balance First',
+                    icon: '📈',
+                  },
+                  {
+                    key: 'BALANCE_ASC',
+                    label: 'Lowest Balance First',
+                    icon: '📉',
+                  },
+                  {
+                    key: 'DONATIONS_COUNT',
+                    label: 'Most Donations First',
+                    icon: '🔢',
+                  },
+                ].map(option => (
+                  <TouchableOpacity
+                    key={option.key}
                     style={[
-                      styles.filterOptionText,
+                      styles.filterOptionRow,
                       filters.sortBy === option.key &&
-                        styles.filterOptionTextActive,
-                    ]}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                        styles.filterOptionRowActive,
+                    ]}
+                    onPress={() =>
+                      setFilters(prev => ({
+                        ...prev,
+                        sortBy: option.key as SortOption,
+                      }))
+                    }>
+                    <Text style={styles.filterOptionIcon}>{option.icon}</Text>
+                    <Text
+                      style={[
+                        styles.filterOptionRowText,
+                        filters.sortBy === option.key &&
+                          styles.filterOptionRowTextActive,
+                      ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
 
-        <View style={styles.modalFooter}>
-          <TouchableOpacity
-            style={styles.applyButton}
-            onPress={() => setShowFilterModal(false)}>
-            <Text style={styles.applyButtonText}>
-              Apply Filters ({filteredDonators.length} results)
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={() => setShowFilterModal(false)}>
+              <Text style={styles.applyButtonIcon}>✓</Text>
+              <Text style={styles.applyButtonText}>
+                Apply Filters ({filteredDonators.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
     </Modal>
   );
 
@@ -638,16 +627,18 @@ const ViewAll = () => {
       <TouchableOpacity
         style={[styles.donatorCard, isHighPriority && styles.highPriorityCard]}
         onPress={() => handleEditDonator(item.id)}
-        activeOpacity={0.7}>
-        {isHighPriority && (
-          <View style={styles.priorityBadge}>
-            <Text style={styles.priorityText}>🔥 HIGH PRIORITY</Text>
-          </View>
-        )}
-
+        activeOpacity={0.8}>
         <View style={styles.cardHeader}>
-          <Text style={styles.donatorName}>{item.name}</Text>
-          <View style={styles.cardActions}>
+          <View style={styles.cardHeaderLeft}>
+            <Text style={styles.donatorName}>{item.name}</Text>
+            {isHighPriority && (
+              <View style={styles.priorityBadge}>
+                <Text style={styles.priorityIcon}>🔥</Text>
+                <Text style={styles.priorityText}>HIGH PRIORITY</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.cardHeaderRight}>
             <View
               style={[
                 styles.statusBadge,
@@ -666,45 +657,75 @@ const ViewAll = () => {
         </View>
 
         <View style={styles.donatorInfo}>
-          {item.phone && <Text style={styles.infoText}>📞 {item.phone}</Text>}
+          {item.phone && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoIcon}>📞</Text>
+              <Text style={styles.infoText}>{item.phone}</Text>
+            </View>
+          )}
           {item.address && (
-            <Text style={styles.infoText}>📍 {item.address}</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoIcon}>📍</Text>
+              <Text style={styles.infoText}>{item.address}</Text>
+            </View>
           )}
           {item.donations.length > 0 && item.donations[0].user && (
-            <Text style={styles.infoText}>
-              👤 Added by: {item.donations[0].user.name}
-            </Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoIcon}>👤</Text>
+              <Text style={styles.infoText}>
+                Added by {item.donations[0].user.name}
+              </Text>
+            </View>
           )}
         </View>
 
-        <View style={styles.amountContainer}>
-          <View style={styles.amountRow}>
-            <Text style={styles.amountLabel}>Total Amount:</Text>
-            <Text style={styles.amountValue}>
-              ₹{totalAmount.toLocaleString('en-IN')}
-            </Text>
+        <View style={styles.amountSection}>
+          <View style={styles.amountGrid}>
+            <View style={styles.amountItem}>
+              <Text style={styles.amountLabel}>Total</Text>
+              <Text style={[styles.amountValue, {color: '#60A5FA'}]}>
+                ₹{totalAmount.toLocaleString('en-IN')}
+              </Text>
+            </View>
+            <View style={styles.amountItem}>
+              <Text style={styles.amountLabel}>Paid</Text>
+              <Text style={[styles.amountValue, {color: '#22C55E'}]}>
+                ₹{totalPaid.toLocaleString('en-IN')}
+              </Text>
+            </View>
+            <View style={styles.amountItem}>
+              <Text style={styles.amountLabel}>Balance</Text>
+              <Text style={[styles.amountValue, {color: '#F59E0B'}]}>
+                ₹{totalBalance.toLocaleString('en-IN')}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.amountRow}>
-            <Text style={styles.amountLabel}>Paid Amount:</Text>
-            <Text style={[styles.amountValue, {color: '#22C55E'}]}>
-              ₹{totalPaid.toLocaleString('en-IN')}
-            </Text>
-          </View>
-
-          <View style={styles.amountRow}>
-            <Text style={styles.amountLabel}>Balance:</Text>
-            <Text style={[styles.amountValue, {color: '#F97316'}]}>
-              ₹{totalBalance.toLocaleString('en-IN')}
+          {/* Progress Bar */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${(totalPaid / totalAmount) * 100}%`,
+                    backgroundColor: totalBalance === 0 ? '#22C55E' : '#60A5FA',
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {((totalPaid / totalAmount) * 100).toFixed(0)}% complete
             </Text>
           </View>
         </View>
 
-        <View style={styles.donationsCount}>
-          <Text style={styles.donationsCountText}>
+        <View style={styles.cardFooter}>
+          <Text style={styles.donationsCount}>
             {item.donations.length} donation
             {item.donations.length > 1 ? 's' : ''}
           </Text>
+          <Text style={styles.viewMoreHint}>View details →</Text>
         </View>
       </TouchableOpacity>
     );
@@ -712,7 +733,7 @@ const ViewAll = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>📋</Text>
+      <Text style={styles.emptyIcon}>📭</Text>
       <Text style={styles.emptyTitle}>No donations found</Text>
       <Text style={styles.emptySubtitle}>
         {searchQuery || activeFiltersCount > 0
@@ -723,6 +744,7 @@ const ViewAll = () => {
         <TouchableOpacity
           style={styles.clearFiltersButton}
           onPress={clearAllFilters}>
+          <Text style={styles.clearFiltersIcon}>🔄</Text>
           <Text style={styles.clearFiltersText}>Clear all filters</Text>
         </TouchableOpacity>
       )}
@@ -732,288 +754,385 @@ const ViewAll = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#60A5FA" />
-        <Text style={styles.loadingText}>Loading all donations...</Text>
+        <View style={styles.loadingContent}>
+          <ActivityIndicator size="large" color="#60A5FA" />
+          <Text style={styles.loadingText}>Loading all donations...</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>All Donations</Text>
-      </View>
-
-      {/* Summary Cards */}
-      <View style={styles.summaryRow}>
-        <View style={[styles.miniSummaryCard, {borderLeftColor: '#60A5FA'}]}>
-          <Text style={styles.miniSummaryAmount}>
-            ₹{summary?.totalAmount.toLocaleString('en-IN') || '0'}
-          </Text>
-          <Text style={styles.miniSummaryLabel}>Total</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>All Donations</Text>
+            <Text style={styles.subtitle}>
+              {allDonators.length} total donators
+            </Text>
+          </View>
         </View>
 
-        <View style={[styles.miniSummaryCard, {borderLeftColor: '#22C55E'}]}>
-          <Text style={styles.miniSummaryAmount}>
-            ₹{summary?.totalPaid.toLocaleString('en-IN') || '0'}
-          </Text>
-          <Text style={styles.miniSummaryLabel}>Paid</Text>
+        {/* Summary Cards */}
+        <View style={styles.summarySection}>
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>
+                ₹{summary?.totalAmount.toLocaleString('en-IN') || '0'}
+              </Text>
+              <Text style={styles.summaryLabel}>Total Amount</Text>
+              <View
+                style={[styles.summaryIndicator, {backgroundColor: '#60A5FA'}]}
+              />
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>
+                ₹{summary?.totalPaid.toLocaleString('en-IN') || '0'}
+              </Text>
+              <Text style={styles.summaryLabel}>Paid Amount</Text>
+              <View
+                style={[styles.summaryIndicator, {backgroundColor: '#22C55E'}]}
+              />
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>
+                ₹{summary?.totalBalance.toLocaleString('en-IN') || '0'}
+              </Text>
+              <Text style={styles.summaryLabel}>Balance Due</Text>
+              <View
+                style={[styles.summaryIndicator, {backgroundColor: '#F59E0B'}]}
+              />
+            </View>
+          </View>
         </View>
 
-        <View style={[styles.miniSummaryCard, {borderLeftColor: '#F97316'}]}>
-          <Text style={styles.miniSummaryAmount}>
-            ₹{summary?.totalBalance.toLocaleString('en-IN') || '0'}
-          </Text>
-          <Text style={styles.miniSummaryLabel}>Balance</Text>
-        </View>
-      </View>
+        {/* Search and Controls */}
+        <View style={styles.controlsSection}>
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search donators..."
+              placeholderTextColor="#64748B"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearSearchButton}
+                onPress={() => setSearchQuery('')}>
+                <Text style={styles.clearSearchIcon}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name, phone, or address..."
-          placeholderTextColor="#9CA3AF"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-      {/* Enhanced Filter Controls */}
-      <View style={styles.filterControlsContainer}>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilterModal(true)}>
-          <Text style={styles.filterButtonIcon}>⚙️</Text>
-          <Text style={styles.filterButtonText}>
-            Filters & Sort
-            {activeFiltersCount > 0 && (
-              <Text style={styles.filterBadge}> ({activeFiltersCount})</Text>
-            )}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.resultsButton}>
-          <Text style={styles.resultsText}>
-            {filteredDonators.length} results
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.pdfButton}
-          onPress={handleDownloadPDF}
-          disabled={isGeneratingPDF}>
-          <Text style={styles.pdfButtonText}>
-            {isGeneratingPDF ? '⏳' : '📄'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Active Filters Preview */}
-      {activeFiltersCount > 0 && (
-        <View style={styles.activeFiltersContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {filters.status !== 'ALL' && (
-              <View style={styles.activeFilterChip}>
-                <Text style={styles.activeFilterText}>
-                  Status: {filters.status}
-                </Text>
-              </View>
-            )}
-            {filters.amountRange !== 'ALL' && (
-              <View style={styles.activeFilterChip}>
-                <Text style={styles.activeFilterText}>
-                  Amount: {filters.amountRange}
-                </Text>
-              </View>
-            )}
-            {filters.balanceRange !== 'ALL' && (
-              <View style={styles.activeFilterChip}>
-                <Text style={styles.activeFilterText}>
-                  Balance: {filters.balanceRange}
-                </Text>
-              </View>
-            )}
-            {filters.addedBy !== 'ALL' && (
-              <View style={styles.activeFilterChip}>
-                <Text style={styles.activeFilterText}>
-                  By: {filters.addedBy}
-                </Text>
-              </View>
-            )}
-            {filters.priority !== 'ALL' && (
-              <View style={styles.activeFilterChip}>
-                <Text style={styles.activeFilterText}>
-                  {filters.priority.replace('_', ' ')}
-                </Text>
-              </View>
-            )}
+          {/* Filter Controls */}
+          <View style={styles.filterControls}>
             <TouchableOpacity
-              style={styles.clearAllChip}
-              onPress={clearAllFilters}>
-              <Text style={styles.clearAllText}>Clear All ✕</Text>
+              style={[
+                styles.filterButton,
+                activeFiltersCount > 0 && styles.filterButtonActive,
+              ]}
+              onPress={() => setShowFilterModal(true)}>
+              <Text style={styles.filterButtonIcon}>⚙️</Text>
+              <Text style={styles.filterButtonText}>
+                Filters
+                {activeFiltersCount > 0 && (
+                  <Text style={styles.filterBadge}>
+                    {' '}
+                    ({activeFiltersCount})
+                  </Text>
+                )}
+              </Text>
             </TouchableOpacity>
-          </ScrollView>
+
+            <View style={styles.resultsCounter}>
+              <Text style={styles.resultsText}>
+                {filteredDonators.length} result
+                {filteredDonators.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.pdfButton,
+                isGeneratingPDF && styles.pdfButtonDisabled,
+              ]}
+              onPress={handleDownloadPDF}
+              disabled={isGeneratingPDF}>
+              <Text style={styles.pdfButtonText}>
+                {isGeneratingPDF ? '⏳' : '📄'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Active Filters Preview */}
+          {activeFiltersCount > 0 && (
+            <View style={styles.activeFiltersContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.activeFiltersRow}>
+                  {filters.status !== 'ALL' && (
+                    <View style={styles.activeFilterChip}>
+                      <Text style={styles.activeFilterText}>
+                        Status: {filters.status}
+                      </Text>
+                    </View>
+                  )}
+                  {filters.amountRange !== 'ALL' && (
+                    <View style={styles.activeFilterChip}>
+                      <Text style={styles.activeFilterText}>
+                        Amount: {filters.amountRange}
+                      </Text>
+                    </View>
+                  )}
+                  {filters.balanceRange !== 'ALL' && (
+                    <View style={styles.activeFilterChip}>
+                      <Text style={styles.activeFilterText}>
+                        Balance: {filters.balanceRange}
+                      </Text>
+                    </View>
+                  )}
+                  {filters.priority !== 'ALL' && (
+                    <View style={styles.activeFilterChip}>
+                      <Text style={styles.activeFilterText}>
+                        {filters.priority.replace('_', ' ')}
+                      </Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.clearAllChip}
+                    onPress={clearAllFilters}>
+                    <Text style={styles.clearAllText}>Clear All ✕</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          )}
         </View>
-      )}
 
-      {/* Donations List */}
-      <FlatList
-        data={filteredDonators}
-        renderItem={renderDonatorCard}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
-      />
+        {/* Donations List */}
+        <FlatList
+          data={filteredDonators}
+          renderItem={renderDonatorCard}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          }
+          ListEmptyComponent={renderEmptyState}
+          showsVerticalScrollIndicator={false}
+        />
 
-      {/* Filter Modal */}
-      {renderFilterModal()}
-    </SafeAreaView>
+        {/* Filter Modal */}
+        {renderFilterModal()}
+      </SafeAreaView>
+    </View>
   );
 };
 
-// Helper functions for status colors (unchanged)
+// Helper functions for status colors
 const getStatusBadgeColor = (status: FilterType) => {
   switch (status) {
     case 'PAID':
-      return '#DCFCE7';
+      return '#065F46';
     case 'PARTIAL':
-      return '#FEF3C7';
+      return '#92400E';
     case 'PENDING':
-      return '#FEE2E2';
+      return '#991B1B';
     default:
-      return '#F3F4F6';
+      return '#374151';
   }
 };
 
 const getStatusTextColor = (status: FilterType) => {
   switch (status) {
     case 'PAID':
-      return '#166534';
+      return '#D1FAE5';
     case 'PARTIAL':
-      return '#92400E';
+      return '#FDE68A';
     case 'PENDING':
-      return '#DC2626';
+      return '#FEE2E2';
     default:
-      return '#6B7280';
+      return '#D1D5DB';
   }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0F172A',
+  },
+  safeArea: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+  },
+  loadingContent: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
+    fontWeight: '600',
+    color: '#E2E8F0',
   },
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(100, 116, 139, 0.2)',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   backIcon: {
-    fontSize: 20,
-    color: '#374151',
+    fontSize: 18,
+    color: '#E2E8F0',
+    fontWeight: '600',
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#F1F5F9',
   },
-  summaryRow: {
+  subtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+
+  // Summary Section
+  summarySection: {
+    padding: 20,
+  },
+  summaryGrid: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    marginBottom: 20,
     gap: 12,
   },
-  miniSummaryCard: {
+  summaryCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 16,
     padding: 16,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
+    alignItems: 'center',
+    position: 'relative',
   },
-  miniSummaryAmount: {
-    fontSize: 16,
+  summaryValue: {
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#F1F5F9',
     marginBottom: 4,
   },
-  miniSummaryLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
+  summaryLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
     fontWeight: '500',
+    textAlign: 'center',
+  },
+  summaryIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '25%',
+    right: '25%',
+    height: 3,
+    borderRadius: 1.5,
+  },
+
+  // Controls Section
+  controlsSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
   },
   searchContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 16,
-  },
-  searchInput: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(51, 65, 85, 0.8)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 16,
-    color: '#374151',
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    marginBottom: 12,
   },
-  filterControlsContainer: {
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#F1F5F9',
+    paddingVertical: 0,
+  },
+  clearSearchButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(100, 116, 139, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearSearchIcon: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  filterControls: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    marginBottom: 16,
     alignItems: 'center',
     gap: 12,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
     flex: 1,
+  },
+  filterButtonActive: {
+    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+    borderColor: 'rgba(96, 165, 250, 0.5)',
   },
   filterButtonIcon: {
     fontSize: 16,
@@ -1022,113 +1141,146 @@ const styles = StyleSheet.create({
   filterButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: '#E2E8F0',
   },
   filterBadge: {
     color: '#60A5FA',
     fontWeight: '600',
   },
-  resultsButton: {
-    backgroundColor: '#60A5FA',
-    paddingHorizontal: 16,
+  resultsCounter: {
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   resultsText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#94A3B8',
+  },
+  pdfButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+  },
+  pdfButtonDisabled: {
+    backgroundColor: 'rgba(100, 116, 139, 0.5)',
+  },
+  pdfButtonText: {
+    fontSize: 18,
   },
   activeFiltersContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 16,
+    marginTop: 12,
+  },
+  activeFiltersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 20,
   },
   activeFilterChip: {
-    backgroundColor: '#EBF4FF',
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(96, 165, 250, 0.3)',
   },
   activeFilterText: {
     fontSize: 12,
-    color: '#1E40AF',
+    color: '#60A5FA',
     fontWeight: '500',
   },
   clearAllChip: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   clearAllText: {
     fontSize: 12,
-    color: '#DC2626',
+    color: '#F87171',
     fontWeight: '500',
   },
+
+  // List
   listContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
   },
+
+  // Donator Card
   donatorCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   highPriorityCard: {
     borderLeftWidth: 4,
     borderLeftColor: '#F59E0B',
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  cardHeaderLeft: {
+    flex: 1,
+    marginRight: 16,
+  },
+  donatorName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    marginBottom: 8,
+  },
   priorityBadge: {
-    backgroundColor: '#FEF3C7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     alignSelf: 'flex-start',
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  priorityIcon: {
+    fontSize: 12,
+    marginRight: 4,
   },
   priorityText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#92400E',
+    color: '#F59E0B',
+    textTransform: 'uppercase',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  donatorName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    flex: 1,
-  },
-  cardActions: {
+  cardHeaderRight: {
     alignItems: 'flex-end',
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
     marginBottom: 4,
   },
   statusText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
   },
   editHint: {
@@ -1139,45 +1291,93 @@ const styles = StyleSheet.create({
   },
   donatorInfo: {
     marginBottom: 16,
+    gap: 6,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoIcon: {
+    fontSize: 12,
+    marginRight: 8,
+    width: 16,
   },
   infoText: {
     fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
+    color: '#94A3B8',
+    flex: 1,
   },
-  amountContainer: {
+  amountSection: {
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: 'rgba(100, 116, 139, 0.2)',
     paddingTop: 16,
     marginBottom: 12,
   },
-  amountRow: {
+  amountGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 12,
+  },
+  amountItem: {
+    flex: 1,
     alignItems: 'center',
-    marginBottom: 8,
   },
   amountLabel: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 11,
+    color: '#94A3B8',
+    marginBottom: 4,
     fontWeight: '500',
   },
   amountValue: {
     fontSize: 14,
-    color: '#1F2937',
+    fontWeight: '700',
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  progressBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: 'rgba(100, 116, 139, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 11,
+    color: '#60A5FA',
     fontWeight: '600',
+    minWidth: 55,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(100, 116, 139, 0.2)',
+    paddingTop: 12,
   },
   donationsCount: {
-    alignItems: 'center',
-  },
-  donationsCountText: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
+  viewMoreHint: {
+    fontSize: 12,
+    color: '#60A5FA',
+    fontWeight: '500',
+  },
+
+  // Empty State
   emptyState: {
     alignItems: 'center',
     paddingVertical: 64,
+    paddingHorizontal: 32,
   },
   emptyIcon: {
     fontSize: 48,
@@ -1186,137 +1386,176 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
+    color: '#E2E8F0',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#94A3B8',
     textAlign: 'center',
-    paddingHorizontal: 32,
-    marginBottom: 16,
+    lineHeight: 20,
+    marginBottom: 24,
   },
   clearFiltersButton: {
-    backgroundColor: '#60A5FA',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+    gap: 8,
+  },
+  clearFiltersIcon: {
+    fontSize: 16,
   },
   clearFiltersText: {
-    color: '#FFFFFF',
+    color: '#F1F5F9',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 
-  // Modal styles
+  // Modal
+  modalBackground: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(100, 116, 139, 0.2)',
+  },
+  modalHeaderButton: {
+    minWidth: 60,
   },
   modalCancel: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: '#F1F5F9',
   },
   modalClear: {
     fontSize: 16,
-    color: '#DC2626',
-    fontWeight: '500',
+    color: '#F87171',
+    fontWeight: '600',
+    textAlign: 'right',
   },
   modalContent: {
     flex: 1,
-    paddingHorizontal: 24,
-  },
-  // Add to your StyleSheet.create():
-  pdfButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#60A5FA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  pdfButtonText: {
-    fontSize: 18,
-    color: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   filterSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 16,
     padding: 20,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   filterSectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: '#F1F5F9',
     marginBottom: 16,
   },
-  filterOptions: {
+  filterOptionsGrid: {
+    flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   filterOption: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
   },
   filterOptionActive: {
-    backgroundColor: '#60A5FA',
-    borderColor: '#60A5FA',
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
+    borderColor: 'rgba(96, 165, 250, 0.3)',
   },
   filterOptionText: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 12,
+    color: '#94A3B8',
     fontWeight: '500',
   },
   filterOptionTextActive: {
-    color: '#FFFFFF',
+    color: '#F1F5F9',
+    fontWeight: '600',
+  },
+  filterOptionsList: {
+    gap: 8,
+  },
+  filterOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    backgroundColor: 'rgba(51, 65, 85, 0.6)',
+  },
+  filterOptionRowActive: {
+    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+    borderColor: 'rgba(96, 165, 250, 0.5)',
+  },
+  filterOptionIcon: {
+    fontSize: 16,
+    marginRight: 12,
+    width: 20,
+  },
+  filterOptionRowText: {
+    fontSize: 14,
+    color: '#E2E8F0',
+    fontWeight: '500',
+    flex: 1,
+  },
+  filterOptionRowTextActive: {
+    color: '#60A5FA',
+    fontWeight: '600',
   },
   modalFooter: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 24,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'rgba(100, 116, 139, 0.2)',
   },
   applyButton: {
-    backgroundColor: '#60A5FA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(96, 165, 250, 0.9)',
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+    gap: 8,
+  },
+  applyButtonIcon: {
+    fontSize: 16,
+    color: '#F1F5F9',
   },
   applyButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: '700',
+    color: '#F1F5F9',
   },
 });
 
