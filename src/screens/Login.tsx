@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import {authAPI, ApiError} from '../Api/auth';
 import {useAuth} from '../context/AuthContext';
-import {LoadingState} from '../components/HomeComponent/common/LoadingState';
 
 const {width, height} = Dimensions.get('window');
 
@@ -148,7 +147,7 @@ const Login = () => {
                 activeOpacity={0.8}>
                 {isLoading ? (
                   <View style={styles.loadingContainer}>
-                    <LoadingState message="Loading" />
+                    <ActivityIndicator size="small" color="#F1F5F9" />
                     <Text style={styles.loadingText}>Signing in...</Text>
                   </View>
                 ) : (
