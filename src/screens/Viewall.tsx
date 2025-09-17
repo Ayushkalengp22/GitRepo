@@ -467,12 +467,12 @@ const styles = StyleSheet.create({
   },
   loadingContent: {
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    // backgroundColor: 'rgba(30, 41, 59, 0.8)',
     paddingHorizontal: 32,
     paddingVertical: 24,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.2)',
+    // borderWidth: 1,
+    // borderColor: 'rgba(100, 116, 139, 0.2)',
   },
   loadingText: {
     marginTop: 16,

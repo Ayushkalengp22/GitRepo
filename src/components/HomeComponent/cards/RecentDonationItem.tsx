@@ -55,24 +55,24 @@ export const RecentDonationItem: React.FC<RecentDonationItemProps> = ({
           <Text style={styles.recentMetaText}>📞 {donator.phone}</Text>
         )}
 
-        {donator.donations.some(d => d.bookNumber) && (
+        {/* {donator.donations.some(d => d.bookNumber) && (
           <Text style={styles.recentMetaText}>
             📚{' '}
             {Array.from(
               new Set(donator.donations.map(d => d.bookNumber).filter(Boolean)),
             ).join(', ')}
           </Text>
-        )}
+        )} */}
 
-        {paymentMethods.length > 0 && (
+        {/* {paymentMethods.length > 0 && (
           <Text style={styles.recentMetaText}>
             💳 {paymentMethods.join(', ')}
           </Text>
-        )}
+        )} */}
 
-        {users.length > 0 && (
+        {/* {users.length > 0 && (
           <Text style={styles.recentMetaText}>👤 {users.join(', ')}</Text>
-        )}
+        )} */}
       </View>
     </View>
   );

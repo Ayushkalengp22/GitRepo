@@ -25,6 +25,7 @@ import SummaryOverview from '../components/EditDonatorComponent/SummaryOverview'
 import PersonalInfoForm from '../components/EditDonatorComponent/PersonalInfoForm';
 import DonationCard from '../components/EditDonatorComponent/DonationCard';
 import EditDonationForm from '../components/EditDonatorComponent/EditDonationForm';
+import {LoadingState} from '../components/HomeComponent/common/LoadingState';
 
 // Navigation types
 type RootStackParamList = {
@@ -207,14 +208,7 @@ const EditDonator = () => {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingContent}>
-          <ActivityIndicator size="large" color="#60A5FA" />
-          <Text style={styles.loadingText}>Loading donator details...</Text>
-        </View>
-      </View>
-    );
+    return <LoadingState message="Loading" />;
   }
 
   if (!donatorData) {

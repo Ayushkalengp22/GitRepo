@@ -125,11 +125,11 @@ const AddDonator = () => {
             navigation.goBack();
 
             // Optional: Add a small delay to ensure the navigation completes
-            setTimeout(() => {
-              console.log(
-                '✅ Navigated back to Home, data should refresh automatically',
-              );
-            }, 100);
+            // setTimeout(() => {
+            //   console.log(
+            //     '✅ Navigated back to Home, data should refresh automatically',
+            //   );
+            // }, 100);
           },
         },
       ]);
