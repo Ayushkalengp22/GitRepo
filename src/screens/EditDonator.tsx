@@ -2,7 +2,6 @@ import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -20,6 +19,12 @@ import {
   Donator,
 } from '../Api/donationAPI';
 import {useAuth} from '../context/AuthContext';
+
+// Import components
+import SummaryOverview from '../components/EditDonatorComponent/SummaryOverview';
+import PersonalInfoForm from '../components/EditDonatorComponent/PersonalInfoForm';
+import DonationCard from '../components/EditDonatorComponent/DonationCard';
+import EditDonationForm from '../components/EditDonatorComponent/EditDonationForm';
 
 // Navigation types
 type RootStackParamList = {
@@ -201,35 +206,6 @@ const EditDonator = () => {
     }
   };
 
-  const getTotalAmount = () => {
-    return (
-      donatorData?.donations.reduce(
-        (sum, donation) => sum + donation.amount,
-        0,
-      ) || 0
-    );
-  };
-
-  const getTotalPaid = () => {
-    return (
-      donatorData?.donations.reduce(
-        (sum, donation) => sum + donation.paidAmount,
-        0,
-      ) || 0
-    );
-  };
-
-  const getTotalBalance = () => {
-    return (
-      donatorData?.donations.reduce(
-        (sum, donation) => sum + donation.balance,
-        0,
-      ) || 0
-    );
-  };
-
-  const paymentMethods: PaymentMethod[] = ['Not Done', 'Cash', 'Online'];
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -278,124 +254,15 @@ const EditDonator = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
           {/* Current Summary */}
-          <View style={styles.summarySection}>
-            <Text style={styles.sectionTitle}>Current Overview</Text>
-            <View style={styles.summaryGrid}>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryValue}>
-                  ₹{getTotalAmount().toLocaleString('en-IN')}
-                </Text>
-                <Text style={styles.summaryLabel}>Total Amount</Text>
-                <View
-                  style={[
-                    styles.summaryIndicator,
-                    {backgroundColor: '#60A5FA'},
-                  ]}
-                />
-              </View>
+          <SummaryOverview donatorData={donatorData} />
 
-              <View style={styles.summaryCard}>
-                <Text style={[styles.summaryValue, {color: '#22C55E'}]}>
-                  ₹{getTotalPaid().toLocaleString('en-IN')}
-                </Text>
-                <Text style={styles.summaryLabel}>Paid Amount</Text>
-                <View
-                  style={[
-                    styles.summaryIndicator,
-                    {backgroundColor: '#22C55E'},
-                  ]}
-                />
-              </View>
-
-              <View style={styles.summaryCard}>
-                <Text style={[styles.summaryValue, {color: '#F59E0B'}]}>
-                  ₹{getTotalBalance().toLocaleString('en-IN')}
-                </Text>
-                <Text style={styles.summaryLabel}>Balance Due</Text>
-                <View
-                  style={[
-                    styles.summaryIndicator,
-                    {backgroundColor: '#F59E0B'},
-                  ]}
-                />
-              </View>
-            </View>
-
-            {/* Progress Bar */}
-            <View style={styles.progressSection}>
-              <Text style={styles.progressText}>
-                Collection Progress:{' '}
-                {((getTotalPaid() / getTotalAmount()) * 100).toFixed(1)}%
-              </Text>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${(getTotalPaid() / getTotalAmount()) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Donator Information Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
-              <View style={styles.sectionIcon}>
-                <Text style={styles.sectionEmoji}>👤</Text>
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter donator name"
-                placeholderTextColor="#64748B"
-                value={donatorForm.name}
-                onChangeText={value => handleDonatorInputChange('name', value)}
-                autoCapitalize="words"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter email address"
-                placeholderTextColor="#64748B"
-                value={donatorForm.email}
-                onChangeText={value => handleDonatorInputChange('email', value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.updateButton,
-                isSaving && styles.updateButtonDisabled,
-              ]}
-              onPress={updateDonatorInfo}
-              disabled={isSaving}>
-              {isSaving ? (
-                <View style={styles.buttonLoadingContent}>
-                  <ActivityIndicator size="small" color="#F1F5F9" />
-                  <Text style={styles.buttonLoadingText}>Updating...</Text>
-                </View>
-              ) : (
-                <View style={styles.buttonContent}>
-                  <Text style={styles.buttonIcon}>✓</Text>
-                  <Text style={styles.updateButtonText}>
-                    Update Information
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* Personal Information Form */}
+          <PersonalInfoForm
+            donatorForm={donatorForm}
+            onInputChange={handleDonatorInputChange}
+            onUpdate={updateDonatorInfo}
+            isSaving={isSaving}
+          />
 
           {/* Donations Section */}
           <View style={styles.section}>
@@ -411,175 +278,24 @@ const EditDonator = () => {
             </Text>
 
             {donatorData.donations.map((donation, index) => (
-              <TouchableOpacity
+              <DonationCard
                 key={donation.id}
-                style={[
-                  styles.donationCard,
-                  selectedDonation === donation.id &&
-                    styles.donationCardSelected,
-                ]}
-                onPress={() => selectDonationForEdit(donation.id)}
-                activeOpacity={0.8}>
-                <View style={styles.donationHeader}>
-                  <View style={styles.donationTitleContainer}>
-                    <Text style={styles.donationTitle}>
-                      Donation #{index + 1}
-                    </Text>
-                    {donation.bookNumber && (
-                      <Text style={styles.donationBook}>
-                        Book: {donation.bookNumber}
-                      </Text>
-                    )}
-                  </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {backgroundColor: getStatusBadgeColor(donation.status)},
-                    ]}>
-                    <Text
-                      style={[
-                        styles.statusText,
-                        {color: getStatusTextColor(donation.status)},
-                      ]}>
-                      {donation.status}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.donationAmounts}>
-                  <View style={styles.donationAmountItem}>
-                    <Text style={styles.donationAmountLabel}>Amount</Text>
-                    <Text
-                      style={[styles.donationAmountValue, {color: '#60A5FA'}]}>
-                      ₹{donation.amount.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
-                  <View style={styles.donationAmountItem}>
-                    <Text style={styles.donationAmountLabel}>Paid</Text>
-                    <Text
-                      style={[styles.donationAmountValue, {color: '#22C55E'}]}>
-                      ₹{donation.paidAmount.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
-                  <View style={styles.donationAmountItem}>
-                    <Text style={styles.donationAmountLabel}>Balance</Text>
-                    <Text
-                      style={[styles.donationAmountValue, {color: '#F59E0B'}]}>
-                      ₹{donation.balance.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.donationMeta}>
-                  <View style={styles.paymentMethodChip}>
-                    <Text style={styles.paymentMethodIcon}>
-                      {donation.paymentMethod === 'Cash'
-                        ? '💵'
-                        : donation.paymentMethod === 'Online'
-                        ? '💳'
-                        : '⏳'}
-                    </Text>
-                    <Text style={styles.paymentMethodName}>
-                      {donation.paymentMethod}
-                    </Text>
-                  </View>
-                  {selectedDonation === donation.id && (
-                    <Text style={styles.selectedIndicator}>
-                      Selected for editing
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
+                donation={donation}
+                index={index}
+                isSelected={selectedDonation === donation.id}
+                onSelect={selectDonationForEdit}
+              />
             ))}
 
             {/* Edit Donation Form */}
             {selectedDonation && (
-              <View style={styles.editForm}>
-                <Text style={styles.editFormTitle}>
-                  Update Selected Donation
-                </Text>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Additional Payment</Text>
-                  <View style={styles.amountInputContainer}>
-                    <Text style={styles.currencySymbol}>₹</Text>
-                    <TextInput
-                      style={[styles.textInput, styles.amountInput]}
-                      placeholder="0.00"
-                      placeholderTextColor="#64748B"
-                      value={donationForm.paidAmount}
-                      onChangeText={value =>
-                        handleDonationInputChange('paidAmount', value)
-                      }
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Payment Method</Text>
-                  <View style={styles.paymentMethodContainer}>
-                    {paymentMethods.map(method => (
-                      <TouchableOpacity
-                        key={method}
-                        style={[
-                          styles.paymentMethodButton,
-                          donationForm.paymentMethod === method &&
-                            styles.paymentMethodActive,
-                        ]}
-                        onPress={() =>
-                          handleDonationInputChange('paymentMethod', method)
-                        }>
-                        <View style={styles.paymentMethodContent}>
-                          <Text style={styles.paymentMethodButtonIcon}>
-                            {method === 'Cash'
-                              ? '💵'
-                              : method === 'Online'
-                              ? '💳'
-                              : '⏳'}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.paymentMethodText,
-                              donationForm.paymentMethod === method &&
-                                styles.paymentMethodTextActive,
-                            ]}>
-                            {method}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={styles.editFormButtons}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setSelectedDonation(null)}>
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.saveButton,
-                      isSaving && styles.saveButtonDisabled,
-                    ]}
-                    onPress={updateDonation}
-                    disabled={isSaving}>
-                    {isSaving ? (
-                      <View style={styles.buttonLoadingContent}>
-                        <ActivityIndicator size="small" color="#F1F5F9" />
-                        <Text style={styles.buttonLoadingText}>Saving...</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.buttonContent}>
-                        <Text style={styles.buttonIcon}>💾</Text>
-                        <Text style={styles.saveButtonText}>Save Changes</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <EditDonationForm
+                donationForm={donationForm}
+                onInputChange={handleDonationInputChange}
+                onUpdate={updateDonation}
+                onCancel={() => setSelectedDonation(null)}
+                isSaving={isSaving}
+              />
             )}
           </View>
 
@@ -588,33 +304,6 @@ const EditDonator = () => {
       </SafeAreaView>
     </View>
   );
-};
-
-// Helper functions for status colors
-const getStatusBadgeColor = (status: string) => {
-  switch (status) {
-    case 'PAID':
-      return '#065F46';
-    case 'PARTIAL':
-      return '#92400E';
-    case 'PENDING':
-      return '#991B1B';
-    default:
-      return '#374151';
-  }
-};
-
-const getStatusTextColor = (status: string) => {
-  switch (status) {
-    case 'PAID':
-      return '#D1FAE5';
-    case 'PARTIAL':
-      return '#FDE68A';
-    case 'PENDING':
-      return '#FEE2E2';
-    default:
-      return '#D1D5DB';
-  }
 };
 
 const styles = StyleSheet.create({
@@ -728,75 +417,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
-  summarySection: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F1F5F9',
-    marginBottom: 16,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.2)',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F1F5F9',
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  summaryIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    left: '25%',
-    right: '25%',
-    height: 3,
-    borderRadius: 1.5,
-  },
-  progressSection: {
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.2)',
-  },
-  progressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#94A3B8',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: 'rgba(100, 116, 139, 0.3)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#60A5FA',
-    borderRadius: 3,
-  },
   section: {
     backgroundColor: 'rgba(30, 41, 59, 0.8)',
     borderRadius: 20,
@@ -815,6 +435,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(100, 116, 139, 0.2)',
   },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
+  },
   sectionIcon: {
     width: 32,
     height: 32,
@@ -828,271 +453,12 @@ const styles = StyleSheet.create({
   sectionEmoji: {
     fontSize: 14,
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#E2E8F0',
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: 'rgba(51, 65, 85, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#F1F5F9',
-    minHeight: 50,
-  },
-  updateButton: {
-    backgroundColor: 'rgba(96, 165, 250, 0.9)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.3)',
-  },
-  updateButtonDisabled: {
-    backgroundColor: 'rgba(100, 116, 139, 0.5)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-  },
-  updateButtonText: {
-    color: '#F1F5F9',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  buttonIcon: {
-    fontSize: 16,
-    color: '#F1F5F9',
-  },
-  buttonLoadingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  buttonLoadingText: {
-    color: '#F1F5F9',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   donationsSubtext: {
     fontSize: 13,
     color: '#64748B',
     marginBottom: 16,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  donationCard: {
-    backgroundColor: 'rgba(51, 65, 85, 0.6)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-  },
-  donationCardSelected: {
-    borderColor: 'rgba(96, 165, 250, 0.6)',
-    backgroundColor: 'rgba(96, 165, 250, 0.1)',
-    borderWidth: 2,
-  },
-  donationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  donationTitleContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  donationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F1F5F9',
-    marginBottom: 2,
-  },
-  donationBook: {
-    fontSize: 12,
-    color: '#94A3B8',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  donationAmounts: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
-  },
-  donationAmountItem: {
-    flex: 1,
-  },
-  donationAmountLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
-    marginBottom: 4,
-  },
-  donationAmountValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  donationMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(100, 116, 139, 0.2)',
-    paddingTop: 12,
-  },
-  paymentMethodChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-  },
-  paymentMethodIcon: {
-    fontSize: 12,
-  },
-  paymentMethodName: {
-    fontSize: 12,
-    color: '#E2E8F0',
-    fontWeight: '500',
-  },
-  selectedIndicator: {
-    fontSize: 11,
-    color: '#60A5FA',
-    fontStyle: 'italic',
-    fontWeight: '500',
-  },
-  editForm: {
-    backgroundColor: 'rgba(96, 165, 250, 0.05)',
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.3)',
-  },
-  editFormTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#60A5FA',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  amountInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(51, 65, 85, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-    borderRadius: 12,
-    paddingLeft: 16,
-    minHeight: 50,
-  },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#60A5FA',
-    marginRight: 8,
-  },
-  amountInput: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    paddingLeft: 0,
-    paddingVertical: 14,
-    minHeight: 'auto',
-  },
-  paymentMethodContainer: {
-    gap: 12,
-  },
-  paymentMethodButton: {
-    backgroundColor: 'rgba(51, 65, 85, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  paymentMethodActive: {
-    backgroundColor: 'rgba(96, 165, 250, 0.2)',
-    borderColor: 'rgba(96, 165, 250, 0.5)',
-  },
-  paymentMethodContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  paymentMethodButtonIcon: {
-    fontSize: 16,
-  },
-  paymentMethodText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#94A3B8',
-    flex: 1,
-  },
-  paymentMethodTextActive: {
-    color: '#60A5FA',
-    fontWeight: '600',
-  },
-  editFormButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: 'rgba(100, 116, 139, 0.3)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-  },
-  cancelButtonText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  saveButton: {
-    flex: 2,
-    backgroundColor: 'rgba(96, 165, 250, 0.9)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.3)',
-  },
-  saveButtonDisabled: {
-    backgroundColor: 'rgba(100, 116, 139, 0.5)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-  },
-  saveButtonText: {
-    color: '#F1F5F9',
-    fontSize: 14,
-    fontWeight: '600',
   },
   bottomSpacing: {
     height: 20,
