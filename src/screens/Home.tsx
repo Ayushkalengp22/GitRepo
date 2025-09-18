@@ -348,12 +348,12 @@ const Home = () => {
     console.log('Notification pressed');
   }, []);
 
-  const handleLogout = useCallback(() => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      {text: 'Cancel', style: 'cancel'},
-      {text: 'Logout', style: 'destructive', onPress: logout},
-    ]);
-  }, [logout]);
+  // const handleLogout = useCallback(() => {
+  //   Alert.alert('Logout', 'Are you sure you want to logout?', [
+  //     {text: 'Cancel', style: 'cancel'},
+  //     {text: 'Logout', style: 'destructive', onPress: logout},
+  //   ]);
+  // }, [logout]);
 
   const handleSearchBook = useCallback(async () => {
     if (!bookNumber.trim()) {
@@ -610,7 +610,7 @@ const Home = () => {
           title="Dashboard"
           subtitle={headerSubtitle}
           onNotificationPress={handleNotificationPress}
-          onLogoutPress={handleLogout}
+          // onLogoutPress={handleLogout}
         />
 
         {/* Show background refresh indicator */}

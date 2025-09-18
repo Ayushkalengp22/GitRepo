@@ -5,14 +5,14 @@ interface HeaderProps {
   title: string;
   subtitle: string;
   onNotificationPress: () => void;
-  onLogoutPress: () => void;
+  // onLogoutPress: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
   onNotificationPress,
-  onLogoutPress,
+  // onLogoutPress,
 }) => {
   return (
     <View style={styles.header}>
@@ -26,9 +26,9 @@ export const Header: React.FC<HeaderProps> = ({
           onPress={onNotificationPress}>
           <Text style={styles.headerButtonIcon}>🔔</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.headerButton} onPress={onLogoutPress}>
+        {/* <TouchableOpacity style={styles.headerButton} onPress={onLogoutPress}>
           <Text style={styles.headerButtonIcon}>🚪</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
