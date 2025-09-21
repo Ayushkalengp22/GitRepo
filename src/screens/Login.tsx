@@ -9,6 +9,9 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import {authAPI, ApiError} from '../Api/auth';
 import {useAuth} from '../context/AuthContext';
@@ -58,8 +61,11 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         {/* Background Decorations */}
         <View style={styles.backgroundDecoration}>
           <View style={styles.circle1} />
@@ -67,8 +73,10 @@ const Login = () => {
           <View style={styles.circle3} />
         </View>
 
-        {/* Content Container */}
-        <View style={styles.contentContainer}>
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
           {/* Header Section */}
           <View style={styles.headerSection}>
             <View style={styles.brandContainer}>
@@ -108,6 +116,7 @@ const Login = () => {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     editable={!isLoading}
+                    returnKeyType="next"
                   />
                 </View>
               </View>
@@ -125,6 +134,8 @@ const Login = () => {
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     editable={!isLoading}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
                   />
                   <TouchableOpacity
                     style={styles.eyeButton}
@@ -171,9 +182,9 @@ const Login = () => {
               Secure login with end-to-end encryption
             </Text>
           </View>
-        </View>
-      </SafeAreaView>
-    </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -182,8 +193,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0F172A',
   },
-  safeArea: {
+  keyboardAvoidingView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    minHeight: height,
   },
   backgroundDecoration: {
     position: 'absolute',
@@ -195,50 +210,46 @@ const styles = StyleSheet.create({
   circle1: {
     position: 'absolute',
     top: height * 0.1,
-    right: -50,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    right: -width * 0.1,
+    width: width * 0.5,
+    height: width * 0.5,
+    borderRadius: width * 0.25,
     backgroundColor: 'rgba(96, 165, 250, 0.1)',
     opacity: 0.5,
   },
   circle2: {
     position: 'absolute',
     top: height * 0.3,
-    left: -80,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    left: -width * 0.15,
+    width: width * 0.4,
+    height: width * 0.4,
+    borderRadius: width * 0.2,
     backgroundColor: 'rgba(34, 197, 94, 0.1)',
     opacity: 0.3,
   },
   circle3: {
     position: 'absolute',
     bottom: height * 0.2,
-    right: -40,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    right: -width * 0.08,
+    width: width * 0.3,
+    height: width * 0.3,
+    borderRadius: width * 0.15,
     backgroundColor: 'rgba(245, 158, 11, 0.1)',
     opacity: 0.4,
   },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-  },
   headerSection: {
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: height * 0.08,
+    paddingHorizontal: width * 0.05,
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: height * 0.04,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: Math.min(width * 0.2, 80),
+    height: Math.min(width * 0.2, 80),
+    borderRadius: Math.min(width * 0.1, 40),
     backgroundColor: 'rgba(96, 165, 250, 0.15)',
     borderWidth: 2,
     borderColor: 'rgba(96, 165, 250, 0.3)',
@@ -276,37 +287,40 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   brandName: {
-    fontSize: 16,
+    fontSize: Math.min(width * 0.04, 16),
     fontWeight: '600',
     color: '#60A5FA',
     letterSpacing: 0.5,
   },
   welcomeContainer: {
     alignItems: 'center',
-    paddingBottom: 32,
+    paddingBottom: height * 0.03,
   },
   welcomeText: {
-    fontSize: 32,
+    fontSize: Math.min(width * 0.08, 32),
     fontWeight: '800',
     color: '#F1F5F9',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitleText: {
-    fontSize: 16,
+    fontSize: Math.min(width * 0.04, 16),
     color: '#94A3B8',
     textAlign: 'center',
     lineHeight: 24,
+    paddingHorizontal: width * 0.05,
   },
   formContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: height * 0.02,
+    paddingHorizontal: width * 0.05,
+    minHeight: height * 0.4,
   },
   formCard: {
     backgroundColor: 'rgba(30, 41, 59, 0.8)',
     borderRadius: 24,
-    padding: 32,
+    padding: Math.min(width * 0.08, 32),
     borderWidth: 1,
     borderColor: 'rgba(100, 116, 139, 0.2)',
     shadowColor: '#000',
@@ -316,10 +330,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: height * 0.03,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: Math.min(width * 0.035, 14),
     fontWeight: '600',
     color: '#E2E8F0',
     marginBottom: 8,
@@ -333,7 +347,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(100, 116, 139, 0.3)',
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingVertical: Platform.OS === 'ios' ? 4 : 2,
+    minHeight: height * 0.065,
   },
   inputIcon: {
     fontSize: 18,
@@ -341,13 +356,15 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
+    paddingVertical: Platform.OS === 'ios' ? 16 : 12,
+    fontSize: Math.min(width * 0.04, 16),
     color: '#F1F5F9',
     fontWeight: '500',
   },
   eyeButton: {
     padding: 8,
+    minWidth: 32,
+    alignItems: 'center',
   },
   eyeIcon: {
     fontSize: 16,
@@ -355,7 +372,7 @@ const styles = StyleSheet.create({
   signInButton: {
     backgroundColor: 'rgba(96, 165, 250, 0.9)',
     borderRadius: 16,
-    paddingVertical: 18,
+    paddingVertical: height * 0.02,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
@@ -367,6 +384,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 6,
+    minHeight: height * 0.06,
   },
   signInButtonDisabled: {
     backgroundColor: 'rgba(100, 116, 139, 0.5)',
@@ -380,11 +398,11 @@ const styles = StyleSheet.create({
   },
   signInButtonText: {
     color: '#F1F5F9',
-    fontSize: 18,
+    fontSize: Math.min(width * 0.045, 18),
     fontWeight: '700',
   },
   buttonIcon: {
-    fontSize: 18,
+    fontSize: Math.min(width * 0.045, 18),
     color: '#F1F5F9',
     fontWeight: '600',
   },
@@ -395,7 +413,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: '#F1F5F9',
-    fontSize: 16,
+    fontSize: Math.min(width * 0.04, 16),
     fontWeight: '600',
   },
   forgotPasswordButton: {
@@ -404,30 +422,19 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     color: '#60A5FA',
-    fontSize: 16,
+    fontSize: Math.min(width * 0.04, 16),
     fontWeight: '500',
   },
   footerSection: {
     alignItems: 'center',
-    paddingBottom: 60,
+    paddingBottom: height * 0.05,
+    paddingHorizontal: width * 0.05,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: Math.min(width * 0.03, 12),
     color: '#64748B',
     textAlign: 'center',
     marginBottom: 12,
   },
-  securityIcons: {
-    flexDirection: 'row',
-    gap: 8,
-    // paddingTop: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  securityIcon: {
-    fontSize: 16,
-    opacity: 0.7,
-  },
 });
-
 export default Login;

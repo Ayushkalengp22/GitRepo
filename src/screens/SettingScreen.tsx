@@ -99,9 +99,9 @@ const SettingsScreen = () => {
                   </Text>
                 </View>
                 <View style={styles.profileInfo}>
-                  {/* <Text style={styles.profileName}>
+                  <Text style={styles.profileName}>
                     {user?.name || user?.email?.split('@')[0] || 'User'}
-                  </Text> */}
+                  </Text>
                   <Text style={styles.profileEmail}>
                     {user?.email || 'No email'}
                   </Text>
